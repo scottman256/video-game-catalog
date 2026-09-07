@@ -1,0 +1,9 @@
+from typing import Protocol
+
+
+class StorageBackend(Protocol):
+    def save(self, subdirectory: str, filename: str, content: bytes) -> str: ...
+
+    def url_for(self, storage_key: str) -> str: ...
+
+    def delete(self, storage_key: str) -> None: ...

@@ -1,0 +1,55 @@
+@if (imageUrl(); as url) {
+  <div class="modal-backdrop cropper-backdrop">
+    <div class="cropper card">
+      <h2 class="cropper__title">Adjust your picture</h2>
+      <p class="cropper__hint">Drag to reposition, and use the slider to zoom.</p>
+
+      <div
+        class="cropper__viewport"
+        [style.width.px]="viewportSize"
+        [style.height.px]="viewportSize"
+        (pointerdown)="startDrag($event)"
+        (pointermove)="drag($event)"
+        (pointerup)="endDrag()"
+        (pointercancel)="endDrag()"
+      >
+        <img
+          #cropImage
+          class="cropper__image"
+          [src]="url"
+          alt="Being cropped for your profile"
+          draggable="false"
+          [style.width.px]="displayWidth()"
+          [style.height.px]="displayHeight()"
+          [style.left.px]="left()"
+          [style.top.px]="top()"
+          (load)="onImageLoad($event)"
+        />
+      </div>
+
+      <div class="cropper__zoom">
+        <label for="crop-zoom">Zoom</label>
+        <input
+          id="crop-zoom"
+          type="range"
+          [min]="minZoom"
+          [max]="maxZoom"
+          step="0.01"
+          [value]="zoom()"
+          (input)="setZoom(+$any($event.target).value)"
+        />
+      </div>
+
+      @if (errorMessage(); as error) {
+        <p class="cropper__error">{{ error }}</p>
+      }
+
+      <div class="cropper__actions">
+        <button type="button" class="btn btn-secondary" (click)="cancel()">Cancel</button>
+        <button type="button" class="btn btn-primary" [disabled]="processing()" (click)="save()">
+          {{ processing() ? 'Saving…' : 'Save picture' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

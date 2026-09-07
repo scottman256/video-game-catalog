@@ -1,0 +1,67 @@
+@if (open()) {
+  <div class="modal-backdrop" (click)="closed.emit()" (keydown.escape)="closed.emit()" tabindex="-1">
+    <div class="profile-modal card" (click)="$event.stopPropagation()">
+      <div class="profile-modal__header">
+        <h2>My Profile</h2>
+        <button type="button" class="profile-modal__close" (click)="closed.emit()" aria-label="Close">✕</button>
+      </div>
+
+      @if (profile(); as currentProfile) {
+        <div class="profile-modal__identity">
+          <app-user-avatar
+            [imageUrl]="currentProfile.profile_picture_url"
+            [username]="currentProfile.username"
+            [large]="true"
+          />
+          <label class="profile-modal__upload btn btn-secondary" for="profile-picture-input">
+            {{ uploading() ? 'Uploading…' : 'Upload picture' }}
+          </label>
+          <input
+            id="profile-picture-input"
+            class="profile-modal__file-input"
+            type="file"
+            accept="image/*"
+            [disabled]="uploading()"
+            (change)="onPictureSelected($event)"
+          />
+          <app-field-error [message]="errorMessage()" />
+          <h3 class="profile-modal__username">{{ currentProfile.username }}</h3>
+          <p class="profile-modal__email">{{ currentProfile.email }}</p>
+        </div>
+
+        <dl class="profile-modal__stats">
+          <div class="profile-modal__stat">
+            <dt>Member since</dt>
+            <dd>{{ currentProfile.created_at | date: 'longDate' }}</dd>
+          </div>
+          <div class="profile-modal__stat">
+            <dt>Systems owned</dt>
+            <dd>{{ currentProfile.systems_owned }}</dd>
+          </div>
+          <div class="profile-modal__stat">
+            <dt>Games owned</dt>
+            <dd>{{ currentProfile.games_owned }}</dd>
+          </div>
+          <div class="profile-modal__stat">
+            <dt>Average review score</dt>
+            <dd>
+              @if (currentProfile.average_review_score !== null) {
+                {{ currentProfile.average_review_score }} / 5
+              } @else {
+                <span class="empty-state">No games rated yet</span>
+              }
+            </dd>
+          </div>
+        </dl>
+      } @else {
+        <p>Loading…</p>
+      }
+
+      <app-profile-picture-cropper
+        [file]="pendingFile()"
+        (cropped)="onCropped($event)"
+        (cancelled)="onCropCancelled()"
+      />
+    </div>
+  </div>
+}

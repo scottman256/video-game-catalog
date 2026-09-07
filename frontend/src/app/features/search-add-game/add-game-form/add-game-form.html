@@ -1,0 +1,42 @@
+<form class="add-game-form card" [formGroup]="form" (ngSubmit)="submit()">
+  <h2>Add a new game</h2>
+  <div class="form-field">
+    <label for="title">Title</label>
+    <input id="title" type="text" formControlName="title" />
+  </div>
+  <div class="form-field">
+    <label for="summary">Summary</label>
+    <textarea id="summary" rows="3" formControlName="summary"></textarea>
+  </div>
+  <div class="form-field">
+    <label for="release_year">Release year</label>
+    <input id="release_year" type="number" formControlName="release_year" />
+  </div>
+  <div class="form-field">
+    <label for="system_id">System</label>
+    <select id="system_id" formControlName="system_id">
+      <option [ngValue]="0" disabled>Select a system</option>
+      @for (system of systems(); track system.id) {
+        <option [ngValue]="system.id">{{ system.name }} ({{ system.release_year }})</option>
+      }
+    </select>
+  </div>
+  <div class="form-field">
+    <label for="esrb_rating">ESRB rating</label>
+    <select id="esrb_rating" formControlName="esrb_rating">
+      @for (rating of esrbRatings; track rating) {
+        <option [ngValue]="rating">{{ rating }}</option>
+      }
+    </select>
+  </div>
+  <div class="form-field">
+    <label for="box_art">Box art</label>
+    <input id="box_art" type="file" accept="image/*" (change)="onBoxArtSelected($event)" />
+  </div>
+  <div class="form-field">
+    <label for="screenshots">Screenshots</label>
+    <input id="screenshots" type="file" accept="image/*" multiple (change)="onScreenshotsSelected($event)" />
+  </div>
+  <app-field-error [message]="errorMessage()" />
+  <button type="submit" class="btn btn-primary" [disabled]="form.invalid || saving()">Add game</button>
+</form>

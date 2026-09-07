@@ -1,0 +1,33 @@
+<div class="auth-card card">
+  <h1>Create an account</h1>
+  <form [formGroup]="form" (ngSubmit)="submit()">
+    <div class="form-field">
+      <label for="username">Username</label>
+      <input id="username" type="text" formControlName="username" autocomplete="username" />
+      <app-field-error [message]="fieldErrors()['username']" />
+    </div>
+    <div class="form-field">
+      <label for="email">Email</label>
+      <input id="email" type="email" formControlName="email" autocomplete="email" />
+      <app-field-error [message]="fieldErrors()['email']" />
+    </div>
+    <div class="form-field">
+      <label for="password">Password</label>
+      <input id="password" type="password" formControlName="password" autocomplete="new-password" />
+      <app-password-strength-meter [password]="passwordValue()" />
+      @if (form.controls.password.touched && form.controls.password.invalid) {
+        <app-field-error message="Needs 8+ characters with a letter, a number, and a special character" />
+      }
+    </div>
+    <div class="form-field">
+      <label for="confirm_password">Confirm password</label>
+      <input id="confirm_password" type="password" formControlName="confirm_password" autocomplete="new-password" />
+      @if (form.errors?.['mismatch'] && form.controls.confirm_password.touched) {
+        <app-field-error message="Passwords do not match" />
+      }
+    </div>
+    <app-field-error [message]="errorMessage()" />
+    <button type="submit" class="btn btn-primary" [disabled]="form.invalid || submitting()">Create account</button>
+  </form>
+  <p class="auth-card__switch">Already have an account? <a routerLink="/login">Log in</a></p>
+</div>

@@ -1,0 +1,138 @@
+.app-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0.75rem 1.5rem;
+  background: var(--color-surface);
+  border-bottom: 1px solid var(--color-border);
+}
+
+.app-header__brand {
+  font-weight: 700;
+  font-size: 1.1rem;
+}
+
+.app-header__nav {
+  display: flex;
+  gap: 1.25rem;
+
+  a {
+    text-decoration: none;
+    color: var(--color-text-muted);
+    font-weight: 500;
+
+    &.active {
+      color: var(--color-primary);
+    }
+  }
+}
+
+.app-header__user {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.user-menu {
+  position: relative;
+}
+
+.user-menu__trigger {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  border: 1px solid transparent;
+  background: none;
+  color: var(--color-text);
+  border-radius: 999px;
+  padding: 0.25rem 0.6rem 0.25rem 0.25rem;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-bg);
+    border-color: var(--color-border);
+  }
+}
+
+.user-menu__username {
+  font-weight: 500;
+}
+
+.user-menu__caret {
+  font-size: 0.7rem;
+  color: var(--color-text-muted);
+}
+
+.user-menu__backdrop {
+  position: fixed;
+  inset: 0;
+  border: none;
+  background: transparent;
+  cursor: default;
+  z-index: 900;
+}
+
+.user-menu__dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  min-width: 14rem;
+  padding: 0.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  z-index: 901;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.18);
+}
+
+.user-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  border: none;
+  background: none;
+  color: var(--color-text);
+  text-align: left;
+  padding: 0.5rem 0.6rem;
+  border-radius: var(--radius);
+  font-size: 0.95rem;
+  font-weight: 500;
+  cursor: pointer;
+
+  &:hover {
+    background: var(--color-bg);
+  }
+}
+
+.user-menu__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.15rem;
+  height: 2.15rem;
+  border-radius: 50%;
+  background: var(--color-bg);
+  color: var(--color-text);
+  flex-shrink: 0;
+
+  svg {
+    width: 1.15rem;
+    height: 1.15rem;
+  }
+
+  .user-menu__item:hover & {
+    background: var(--color-surface);
+  }
+}
+
+.user-menu__divider {
+  height: 1px;
+  background: var(--color-border);
+  margin: 0.35rem 0.25rem;
+}
+
+.app-main {
+  padding: 1.5rem;
+  max-width: 1100px;
+  margin: 0 auto;
+}

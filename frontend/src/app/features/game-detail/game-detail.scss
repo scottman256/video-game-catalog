@@ -1,0 +1,38 @@
+.game-detail {
+  display: grid;
+  grid-template-columns: 320px 1fr;
+  gap: 2rem;
+  padding: 2rem;
+
+  @media (max-width: 720px) {
+    grid-template-columns: 1fr;
+  }
+}
+
+.game-detail__box-art {
+  width: 100%;
+  border-radius: var(--radius);
+  margin-bottom: 1rem;
+}
+
+.game-detail__meta {
+  color: var(--color-text-muted);
+  margin: 0.25rem 0 1rem;
+}
+
+.game-detail__summary {
+  line-height: 1.5;
+}
+
+.game-detail__scores {
+  display: flex;
+  gap: 2.5rem;
+  margin: 1.5rem 0;
+}
+
+.game-detail__score-label {
+  display: block;
+  font-size: 0.8rem;
+  color: var(--color-text-muted);
+  margin-bottom: 0.25rem;
+}

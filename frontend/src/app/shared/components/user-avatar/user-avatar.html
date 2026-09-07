@@ -1,0 +1,7 @@
+<span class="avatar" [class.avatar--large]="large()">
+  @if (imageUrl(); as url) {
+    <img class="avatar__image" [src]="url" [alt]="username()" />
+  } @else {
+    <span class="avatar__initial">{{ initial() }}</span>
+  }
+</span>

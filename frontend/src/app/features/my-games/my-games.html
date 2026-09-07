@@ -1,0 +1,43 @@
+<div class="page-header">
+  <h1>My Games</h1>
+  <div class="sort-controls">
+    <label for="sort">Sort by</label>
+    <select id="sort" [value]="sort()" (change)="changeSort($any($event.target).value)">
+      <option value="rating">Rating</option>
+      <option value="title">Title</option>
+      <option value="release_year">Release Year</option>
+      <option value="system">System</option>
+      <option value="added_at">Date Added</option>
+    </select>
+    <button type="button" class="btn btn-secondary" (click)="toggleDirection()">
+      {{ direction() === 'asc' ? '↑ Ascending' : '↓ Descending' }}
+    </button>
+  </div>
+</div>
+
+@if (errorMessage(); as error) {
+  <p class="empty-state">{{ error }}</p>
+} @else if (loading()) {
+  <p>Loading…</p>
+} @else if (entries().length === 0) {
+  <p class="empty-state">Your catalog is empty. <a routerLink="/search">Search for a game to add</a>.</p>
+} @else {
+  <div class="game-grid">
+    @for (entry of entries(); track entry.id) {
+      <a class="game-card card" [routerLink]="['/library', entry.id]">
+        <div class="game-card__art">
+          @if (entry.game.box_art_url) {
+            <img [src]="entry.game.box_art_url" alt="{{ entry.game.title }} box art" />
+          } @else {
+            <div class="game-card__art-placeholder">No Art</div>
+          }
+        </div>
+        <div class="game-card__body">
+          <h3>{{ entry.game.title }}</h3>
+          <p class="game-card__meta">{{ entry.game.release_year }} · {{ entry.game.system.name }}</p>
+          <app-star-score [score]="entry.weighted_score" />
+        </div>
+      </a>
+    }
+  </div>
+}

@@ -1,0 +1,65 @@
+<div class="search-page">
+  <h1>Find a Game</h1>
+  <form class="search-form" [formGroup]="form" (ngSubmit)="search()">
+    <input type="text" formControlName="query" placeholder="Search by title…" aria-label="Search by title" />
+    <button type="submit" class="btn btn-primary" [disabled]="searching()">Search</button>
+  </form>
+  <app-field-error [message]="errorMessage()" />
+
+  @if (results(); as gameResults) {
+    @if (gameResults.length > 0) {
+      <ul class="results-list">
+        @for (game of gameResults; track game.id) {
+          <li class="results-list__item card">
+            <div>
+              <strong>{{ game.title }}</strong>
+              <span class="results-list__meta">{{ game.release_year }} · {{ game.system.name }}</span>
+              @if (game.community_average_score !== null) {
+                <app-star-score [score]="game.community_average_score" />
+              }
+            </div>
+            @if (addingGameId() === game.id) {
+              <div class="add-inline">
+                <select
+                  aria-label="Ownership type"
+                  [value]="ownershipType()"
+                  (change)="ownershipType.set($any($event.target).value)"
+                >
+                  <option value="digital">Digital</option>
+                  <option value="physical">Physical</option>
+                </select>
+                <input
+                  type="number"
+                  step="0.01"
+                  placeholder="Price paid"
+                  aria-label="Price paid"
+                  [value]="pricePaid()"
+                  (input)="pricePaid.set($any($event.target).value)"
+                />
+                <button type="button" class="btn btn-primary" (click)="confirmAdd(game.id)">Confirm</button>
+                <button type="button" class="btn btn-secondary" (click)="addingGameId.set(null)">Cancel</button>
+              </div>
+            } @else if (game.in_library) {
+              <span class="results-list__owned" title="You already own this game">
+                <button type="button" class="btn btn-secondary" disabled>Add to My Games</button>
+              </span>
+            } @else {
+              <button type="button" class="btn btn-secondary" (click)="startAdding(game.id)">Add to My Games</button>
+            }
+          </li>
+        }
+      </ul>
+    } @else {
+      <p class="empty-state">No games found for that title.</p>
+    }
+  }
+
+  <div class="add-new">
+    <button type="button" class="btn btn-secondary" (click)="showAddForm.set(!showAddForm())">
+      {{ showAddForm() ? 'Cancel' : "Can't find it? Add a new game" }}
+    </button>
+    @if (showAddForm()) {
+      <app-add-game-form (created)="onGameCreated($event)" />
+    }
+  </div>
+</div>

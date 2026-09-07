@@ -1,0 +1,36 @@
+.star-score {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.15rem;
+}
+
+.star {
+  position: relative;
+  display: inline-block;
+  font-size: 1.05rem;
+  line-height: 1;
+}
+
+.star__empty {
+  color: var(--color-border);
+}
+
+.star__filled {
+  position: absolute;
+  top: 0;
+  left: 0;
+  overflow: hidden;
+  white-space: nowrap;
+  color: #f5a623;
+}
+
+.star-score__value {
+  margin-left: 0.4rem;
+  font-weight: 600;
+  color: var(--color-text);
+}
+
+.star-score--na {
+  font-style: italic;
+  color: var(--color-text-muted);
+}

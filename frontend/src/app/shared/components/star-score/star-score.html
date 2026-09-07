@@ -1,0 +1,13 @@
+@if (starPercents(); as percents) {
+  <span class="star-score" [attr.aria-label]="score() + ' out of 5 stars'">
+    @for (percent of percents; track $index) {
+      <span class="star">
+        <span class="star__empty">★</span>
+        <span class="star__filled" [style.width.%]="percent">★</span>
+      </span>
+    }
+    <span class="star-score__value">{{ score() }}</span>
+  </span>
+} @else {
+  <span class="star-score star-score--na">N/A</span>
+}

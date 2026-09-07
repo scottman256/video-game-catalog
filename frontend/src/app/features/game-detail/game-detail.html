@@ -1,0 +1,36 @@
+@if (errorMessage(); as error) {
+  <p class="empty-state">{{ error }}</p>
+} @else if (loading()) {
+  <p>Loading…</p>
+} @else if (game(); as g) {
+  <div class="game-detail card">
+    <div class="game-detail__media">
+      @if (boxArtUrl(); as art) {
+        <img class="game-detail__box-art" [src]="art" alt="{{ g.title }} box art" />
+      }
+      <app-image-carousel [images]="screenshotUrls()" (imageClick)="activeImageUrl.set($event)" />
+    </div>
+    <div class="game-detail__info">
+      <h1>{{ g.title }}</h1>
+      <p class="game-detail__meta">{{ g.release_year }} · {{ g.system.name }} · ESRB {{ g.esrb_rating }}</p>
+      @if (g.summary) {
+        <p class="game-detail__summary">{{ g.summary }}</p>
+      }
+      <div class="game-detail__scores">
+        <div>
+          <span class="game-detail__score-label">Your score</span>
+          <app-star-score [score]="review()?.weighted_score ?? null" />
+        </div>
+        <div>
+          <span class="game-detail__score-label">Community average</span>
+          <app-star-score [score]="g.community_average_score" />
+        </div>
+      </div>
+      @if (libraryEntry(); as entry) {
+        <app-review-form [libraryId]="entry.id" [review]="review()" (saved)="onReviewSaved($event)" />
+      }
+    </div>
+  </div>
+}
+
+<app-image-modal [imageUrl]="activeImageUrl()" (closed)="activeImageUrl.set(null)" />

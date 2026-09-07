@@ -1,0 +1,76 @@
+@if (auth.currentUser(); as user) {
+  <header class="app-header">
+    <div class="app-header__brand">🎮 Game Catalog</div>
+    <nav class="app-header__nav">
+      <a routerLink="/my-games" routerLinkActive="active">My Games</a>
+      <a routerLink="/search" routerLinkActive="active">Search / Add Game</a>
+    </nav>
+    <div class="app-header__user">
+      <div class="user-menu">
+        <button
+          type="button"
+          class="user-menu__trigger"
+          [attr.aria-expanded]="menuOpen()"
+          aria-haspopup="menu"
+          (click)="menuOpen.set(!menuOpen())"
+        >
+          <app-user-avatar [imageUrl]="profile()?.profile_picture_url ?? null" [username]="user.username" />
+          <span class="user-menu__username">{{ user.username }}</span>
+          <span class="user-menu__caret" aria-hidden="true">▾</span>
+        </button>
+
+        @if (menuOpen()) {
+          <button type="button" class="user-menu__backdrop" (click)="menuOpen.set(false)" aria-label="Close menu">
+          </button>
+          <div class="user-menu__dropdown card" role="menu">
+            <button type="button" class="user-menu__item" role="menuitem" (click)="openProfile()">
+              <span class="user-menu__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
+                  <circle cx="12" cy="7" r="4" />
+                </svg>
+              </span>
+              <span>View profile</span>
+            </button>
+
+            <button type="button" class="user-menu__item" role="menuitem" (click)="openSettings()">
+              <span class="user-menu__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <circle cx="12" cy="12" r="3" />
+                  <path
+                    d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 1 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 1 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 1 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 1 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"
+                  />
+                </svg>
+              </span>
+              <span>Settings</span>
+            </button>
+
+            <div class="user-menu__divider"></div>
+
+            <button type="button" class="user-menu__item" role="menuitem" (click)="logout()">
+              <span class="user-menu__icon" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                  <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+                  <path d="M16 17l5-5-5-5" />
+                  <path d="M21 12H9" />
+                </svg>
+              </span>
+              <span>Log out</span>
+            </button>
+          </div>
+        }
+      </div>
+    </div>
+  </header>
+} @else {
+  <header class="app-header">
+    <div class="app-header__brand">🎮 Game Catalog</div>
+  </header>
+}
+
+<main class="app-main">
+  <router-outlet />
+</main>
+
+<app-profile-modal [open]="profileOpen()" (closed)="profileOpen.set(false)" />
+<app-settings-modal [open]="settingsOpen()" (closed)="settingsOpen.set(false)" />

@@ -1,0 +1,6 @@
+@if (imageUrl(); as url) {
+  <div class="modal-backdrop" (click)="closed.emit()" (keydown.escape)="closed.emit()" tabindex="-1">
+    <button type="button" class="modal-close" (click)="closed.emit()" aria-label="Close">✕</button>
+    <img class="modal-image" [src]="url" alt="Full size screenshot" />
+  </div>
+}
