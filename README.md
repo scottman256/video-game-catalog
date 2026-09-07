@@ -2,6 +2,8 @@
 
 Track the video games you own: search or add games to a shared global catalog, note what you own and what you paid, and rate your games across five weighted categories.
 
+> **How this was built:** This application was created with [Claude Code](https://claude.com/claude-code), using a combination of Claude Opus and Claude Sonnet. The requirements, design decisions, and direction came from a human (Scott); the implementation, tests, and documentation were written by Claude.
+
 - **Backend** (Python / FastAPI / SQLAlchemy): see [backend/README.md](backend/README.md) for setup, running the API, migrations, and tests.
 - **Frontend** (Angular): see [frontend/README.md](frontend/README.md) for setup, running the dev server, and tests.
 
