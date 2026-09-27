@@ -19,6 +19,7 @@ export interface Game {
   images: GameImage[];
   community_average_score: number | null;
   in_library: boolean;
+  is_approved: boolean;
 }
 
 export interface GameCreatePayload {
@@ -28,3 +29,5 @@ export interface GameCreatePayload {
   system_id: number;
   esrb_rating: string;
 }
+
+export const ESRB_RATINGS = ['EC', 'E', 'E10+', 'T', 'M', 'AO', 'RP'];

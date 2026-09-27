@@ -7,9 +7,11 @@ import { environment } from '../environments/environment';
 import { App } from './app';
 import { Auth } from './core/services/auth';
 import { ProfileService } from './core/services/profile';
+import { User } from './core/models/user.model';
 import { SettingsService } from './core/services/settings';
+import { ADMIN, ADMIN_ACTING_AS_PLAYER, PLAYER } from './testing/session-fixtures';
 
-const USER = { id: 1, username: 'scott', email: 'scott@example.com' };
+const USER = PLAYER;
 const PROFILE = {
   username: 'scott',
   email: 'scott@example.com',
@@ -31,12 +33,72 @@ describe('App', () => {
     httpMock = TestBed.inject(HttpTestingController);
   });
 
-  function loginAndFlushSessionRequests(darkMode = false): void {
-    TestBed.inject(Auth).currentUser.set(USER);
+  function loginAndFlushSessionRequests(darkMode = false, user: User = USER): void {
+    TestBed.inject(Auth).currentUser.set(user);
     TestBed.flushEffects();
     httpMock.expectOne(`${environment.apiBaseUrl}/me/settings`).flush({ dark_mode: darkMode });
     httpMock.expectOne(`${environment.apiBaseUrl}/me/profile`).flush(PROFILE);
   }
+
+  function renderSignedInAs(user: User) {
+    const fixture = TestBed.createComponent(App);
+    fixture.detectChanges();
+    loginAndFlushSessionRequests(false, user);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  function navLabels(element: HTMLElement): string[] {
+    return [...element.querySelectorAll('.app-header__nav a')].map((link) =>
+      (link.childNodes[0].textContent ?? '').trim(),
+    );
+  }
+
+  describe('admin sessions', () => {
+    it('shows the admin screens instead of My Games, with the pending count', () => {
+      const fixture = renderSignedInAs(ADMIN);
+      httpMock.expectOne(`${environment.apiBaseUrl}/admin/games/pending`).flush([{ id: 1 }, { id: 2 }]);
+      fixture.detectChanges();
+
+      expect(navLabels(fixture.nativeElement)).toEqual(['All Games', 'Approval Queue', 'Assume User']);
+      expect(fixture.nativeElement.querySelector('.app-header__count').textContent.trim()).toBe('2');
+      expect(fixture.nativeElement.querySelector('.app-header__admin-tag')).not.toBeNull();
+    });
+
+    it('shows player navigation and no banner for a regular player', () => {
+      const fixture = renderSignedInAs(USER);
+
+      expect(navLabels(fixture.nativeElement)).toEqual(['My Games', 'Search / Add Game']);
+      expect(fixture.nativeElement.querySelector('.impersonation-banner')).toBeNull();
+    });
+
+    it('makes it obvious when the admin is acting as a player', () => {
+      const fixture = renderSignedInAs(ADMIN_ACTING_AS_PLAYER);
+      const banner = fixture.nativeElement.querySelector('.impersonation-banner') as HTMLElement;
+
+      expect(banner.textContent).toContain('You are acting as scott');
+      expect(banner.textContent).toContain('signed in as admin');
+      expect([...banner.querySelectorAll('a')].map((link) => link.getAttribute('href'))).toEqual([
+        '/admin/games',
+        '/admin/queue',
+        '/admin/users',
+      ]);
+      expect(navLabels(fixture.nativeElement)).toEqual(['My Games', 'Search / Add Game']);
+    });
+
+    it('returns to the admin screens when the admin stops acting as the player', () => {
+      const fixture = renderSignedInAs(ADMIN_ACTING_AS_PLAYER);
+      const router = TestBed.inject(Router);
+      const navigated: string[] = [];
+      router.navigateByUrl = ((url: string) => (navigated.push(url), Promise.resolve(true))) as typeof router.navigateByUrl;
+
+      fixture.nativeElement.querySelector('.impersonation-banner__stop').click();
+      httpMock.expectOne(`${environment.apiBaseUrl}/admin/impersonation`).flush(ADMIN);
+
+      expect(TestBed.inject(Auth).currentUser()).toEqual(ADMIN);
+      expect(navigated).toEqual(['/admin/users']);
+    });
+  });
 
   it('should create the app', () => {
     const fixture = TestBed.createComponent(App);

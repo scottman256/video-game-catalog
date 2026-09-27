@@ -21,6 +21,15 @@ class UserRepository:
         stmt = select(User).where((User.username == identifier) | (User.email == identifier))
         return self._db.scalar(stmt)
 
+    def list_non_admins(self) -> list[User]:
+        stmt = select(User).where(User.is_admin.is_(False)).order_by(User.username)
+        return list(self._db.scalars(stmt))
+
+    def set_admin(self, user: User, is_admin: bool) -> User:
+        user.is_admin = is_admin
+        self._db.flush()
+        return user
+
     def set_profile_picture(self, user: User, storage_key: str) -> User:
         user.profile_picture_storage_key = storage_key
         self._db.flush()

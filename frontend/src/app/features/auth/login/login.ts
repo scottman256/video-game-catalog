@@ -35,13 +35,13 @@ export class Login {
     this.errorMessage.set(null);
     this.submitting.set(true);
     this.auth.login(this.form.getRawValue()).subscribe({
-      next: () => this.goToMyGames(),
+      next: () => this.goHome(),
       error: (error: { status?: number }) => this.failWith(describeLoginError(error.status)),
     });
   }
 
-  private goToMyGames(): void {
-    this.router.navigateByUrl('/my-games').then((navigated) => {
+  private goHome(): void {
+    this.router.navigateByUrl(this.auth.homeUrl()).then((navigated) => {
       this.submitting.set(false);
       if (!navigated) this.failWith('Signed in, but could not open your games. Please refresh the page.');
     });

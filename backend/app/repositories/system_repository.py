@@ -18,5 +18,8 @@ class SystemRepository:
         self._db.flush()
         return system
 
+    def exists(self, system_id: int) -> bool:
+        return self._db.get(System, system_id) is not None
+
     def name_exists(self, name: str) -> bool:
         return self._db.scalar(select(System.id).where(System.name == name)) is not None

@@ -8,5 +8,5 @@ export const guestGuard: CanActivateFn = () => {
   const auth = inject(Auth);
   const router = inject(Router);
 
-  return auth.currentUser() ? router.parseUrl('/my-games') : true;
+  return auth.currentUser() ? router.parseUrl(auth.homeUrl()) : true;
 };

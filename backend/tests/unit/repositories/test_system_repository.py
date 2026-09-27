@@ -22,3 +22,11 @@ def test_name_exists(db_session):
 
     assert repo.name_exists("Nintendo Entertainment System") is True
     assert repo.name_exists("Sega Genesis") is False
+
+
+def test_exists_reports_whether_system_is_present(db_session):
+    repo = SystemRepository(db_session)
+    system = repo.create("Nintendo Entertainment System", 1985)
+
+    assert repo.exists(system.id) is True
+    assert repo.exists(999) is False

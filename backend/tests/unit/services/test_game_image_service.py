@@ -3,10 +3,11 @@ import io
 import pytest
 from PIL import Image
 
+from app.repositories.game_image_repository import GameImageRepository
 from app.repositories.game_repository import GameRepository
 from app.repositories.system_repository import SystemRepository
 from app.repositories.user_repository import UserRepository
-from app.services.exceptions import InvalidImageError
+from app.services.exceptions import ImageNotFoundError, InvalidImageError
 from app.services.game_image_service import GameImageService
 from app.storage.local_disk_storage import LocalDiskStorage
 
@@ -67,3 +68,48 @@ def test_screenshots_get_increasing_display_order(db_session, tmp_path):
 
     assert first.display_order == 0
     assert second.display_order == 1
+
+
+def test_uploading_box_art_replaces_the_existing_one(db_session, tmp_path):
+    game_id = _make_game(db_session)
+    service = GameImageService(db_session, LocalDiskStorage(str(tmp_path)))
+    original_key = service.add_image(game_id, "box_art", _png_bytes()).storage_key
+
+    replacement = service.add_image(game_id, "box_art", _png_bytes())
+
+    remaining = GameImageRepository(db_session).list_for_game(game_id, "box_art")
+    assert [image.id for image in remaining] == [replacement.id]
+    assert not (tmp_path / original_key).exists()
+
+
+def test_screenshot_order_continues_after_a_deletion(db_session, tmp_path):
+    game_id = _make_game(db_session)
+    service = GameImageService(db_session, LocalDiskStorage(str(tmp_path)))
+    first = service.add_image(game_id, "screenshot", _png_bytes())
+    second = service.add_image(game_id, "screenshot", _png_bytes())
+    service.delete_image(game_id, first.id)
+
+    third = service.add_image(game_id, "screenshot", _png_bytes())
+
+    assert third.display_order == second.display_order + 1
+
+
+def test_delete_image_removes_record_and_file(db_session, tmp_path):
+    game_id = _make_game(db_session)
+    service = GameImageService(db_session, LocalDiskStorage(str(tmp_path)))
+    image = service.add_image(game_id, "screenshot", _png_bytes())
+    storage_key = image.storage_key
+
+    service.delete_image(game_id, image.id)
+
+    assert GameImageRepository(db_session).list_for_game(game_id, "screenshot") == []
+    assert not (tmp_path / storage_key).exists()
+
+
+def test_delete_image_rejects_image_from_another_game(db_session, tmp_path):
+    game_id = _make_game(db_session)
+    service = GameImageService(db_session, LocalDiskStorage(str(tmp_path)))
+    image = service.add_image(game_id, "screenshot", _png_bytes())
+
+    with pytest.raises(ImageNotFoundError):
+        service.delete_image(game_id + 1, image.id)

@@ -3,11 +3,12 @@ import { RouterLink } from '@angular/router';
 
 import { LibraryEntry, LibrarySortField, SortDirection } from '../../core/models/library-entry.model';
 import { LibraryService } from '../../core/services/library';
+import { PendingBadge } from '../../shared/components/pending-badge/pending-badge';
 import { StarScore } from '../../shared/components/star-score/star-score';
 
 @Component({
   selector: 'app-my-games',
-  imports: [RouterLink, StarScore],
+  imports: [RouterLink, PendingBadge, StarScore],
   templateUrl: './my-games.html',
   styleUrl: './my-games.scss',
 })

@@ -1,0 +1,20 @@
+<div class="admin-page">
+  <div class="admin-page__header">
+    <div>
+      <h1>Approval Queue</h1>
+      <p class="admin-page__subtitle">
+        Games submitted by players, oldest first. Only the submitter can see a game until it is approved.
+      </p>
+    </div>
+  </div>
+
+  @if (errorMessage(); as error) {
+    <p class="empty-state">{{ error }}</p>
+  } @else if (loading()) {
+    <p>Loading…</p>
+  } @else if (games().length === 0) {
+    <p class="empty-state">All caught up. No games are waiting for approval.</p>
+  } @else {
+    <app-admin-game-list [games]="games()" actionLabel="Review" />
+  }
+</div>

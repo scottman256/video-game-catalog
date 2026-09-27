@@ -10,11 +10,16 @@ describe('Login', () => {
   let loginCalls: unknown[];
   let loginResult: Observable<User>;
   let navigateCalls: string[];
+  let homeUrl: string;
 
   beforeEach(async () => {
     loginCalls = [];
     navigateCalls = [];
-    const authStub = { login: (payload: unknown) => (loginCalls.push(payload), loginResult) };
+    homeUrl = '/my-games';
+    const authStub = {
+      login: (payload: unknown) => (loginCalls.push(payload), loginResult),
+      homeUrl: () => homeUrl,
+    };
 
     await TestBed.configureTestingModule({
       imports: [Login],
@@ -38,13 +43,24 @@ describe('Login', () => {
   });
 
   it('navigates to my-games on successful login', () => {
-    loginResult = of({ id: 1, username: 'scott', email: 'a@b.com' });
+    loginResult = of({ id: 1, username: 'scott', email: 'a@b.com', is_admin: false, impersonated_by: null });
     const fixture = TestBed.createComponent(Login);
     fixture.componentInstance['form'].setValue({ identifier: 'scott', password: 'pw' });
 
     fixture.componentInstance.submit();
 
     expect(navigateCalls).toEqual(['/my-games']);
+  });
+
+  it('sends an admin to the admin screens on successful login', () => {
+    homeUrl = '/admin/games';
+    loginResult = of({ id: 3, username: 'admin', email: 'admin@admin.com', is_admin: true, impersonated_by: null });
+    const fixture = TestBed.createComponent(Login);
+    fixture.componentInstance['form'].setValue({ identifier: 'admin', password: 'pw' });
+
+    fixture.componentInstance.submit();
+
+    expect(navigateCalls).toEqual(['/admin/games']);
   });
 
   it('blames the credentials only when the server rejects them', () => {
@@ -80,7 +96,7 @@ describe('Login', () => {
   });
 
   it('re-enables the button after a successful login so it can never lock up', async () => {
-    loginResult = of({ id: 1, username: 'scott', email: 'a@b.com' });
+    loginResult = of({ id: 1, username: 'scott', email: 'a@b.com', is_admin: false, impersonated_by: null });
     const fixture = TestBed.createComponent(Login);
     fixture.componentInstance['form'].setValue({ identifier: 'scott', password: 'pw' });
 
@@ -91,7 +107,7 @@ describe('Login', () => {
   });
 
   it('explains itself when signing in succeeds but navigation is blocked', async () => {
-    loginResult = of({ id: 1, username: 'scott', email: 'a@b.com' });
+    loginResult = of({ id: 1, username: 'scott', email: 'a@b.com', is_admin: false, impersonated_by: null });
     const router = TestBed.inject(Router);
     router.navigateByUrl = (() => Promise.resolve(false)) as typeof router.navigateByUrl;
     const fixture = TestBed.createComponent(Login);

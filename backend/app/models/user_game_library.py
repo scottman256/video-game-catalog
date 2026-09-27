@@ -24,4 +24,4 @@ class UserGameLibrary(Base):
     added_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     game: Mapped["Game"] = relationship()
-    review: Mapped["UserGameReview | None"] = relationship(uselist=False)
+    review: Mapped["UserGameReview | None"] = relationship(uselist=False, cascade="all, delete-orphan")

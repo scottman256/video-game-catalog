@@ -10,6 +10,7 @@ export interface LibraryGameSummary {
   release_year: number;
   system: GameSystem;
   box_art_url: string | null;
+  is_approved: boolean;
 }
 
 export interface LibraryEntry {

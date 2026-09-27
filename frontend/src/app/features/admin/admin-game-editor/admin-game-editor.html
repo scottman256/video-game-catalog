@@ -1,0 +1,141 @@
+<div class="admin-page">
+  @if (loadError(); as error) {
+    <p class="empty-state">{{ error }}</p>
+  } @else if (game(); as g) {
+    <a class="game-editor__back" [routerLink]="g.is_approved ? '/admin/games' : '/admin/queue'">
+      ← {{ g.is_approved ? 'All Games' : 'Approval Queue' }}
+    </a>
+
+    <div class="game-editor__heading">
+      <h1>{{ g.title }}</h1>
+      @if (!g.is_approved) {
+        <app-pending-badge />
+      }
+      <p class="admin-page__subtitle">
+        Submitted by {{ g.submitted_by }} on {{ g.submitted_at | date: 'mediumDate' }}
+      </p>
+    </div>
+
+    <div class="game-editor">
+      <form class="game-editor__form card" [formGroup]="form" (ngSubmit)="save()">
+        <h2>Details</h2>
+        <div class="form-field">
+          <label for="title">Title</label>
+          <input id="title" type="text" formControlName="title" />
+        </div>
+        <div class="form-field">
+          <label for="summary">Summary</label>
+          <textarea id="summary" rows="5" formControlName="summary"></textarea>
+        </div>
+        <div class="game-editor__row">
+          <div class="form-field">
+            <label for="release_year">Release year</label>
+            <input id="release_year" type="number" formControlName="release_year" />
+          </div>
+          <div class="form-field">
+            <label for="esrb_rating">ESRB rating</label>
+            <select id="esrb_rating" formControlName="esrb_rating">
+              @for (rating of esrbRatings; track rating) {
+                <option [ngValue]="rating">{{ rating }}</option>
+              }
+            </select>
+          </div>
+        </div>
+        <div class="form-field">
+          <label for="system_id">System</label>
+          <select id="system_id" formControlName="system_id">
+            @for (system of systems(); track system.id) {
+              <option [ngValue]="system.id">{{ system.name }} ({{ system.release_year }})</option>
+            }
+          </select>
+        </div>
+        <div class="game-editor__save">
+          <button type="submit" class="btn btn-primary" [disabled]="form.invalid || busy()">Save changes</button>
+          <!-- The live region stays in the DOM so screen readers announce the text when it appears. -->
+          <output class="game-editor__saved-region" aria-live="polite">
+            @if (savedConfirmationVisible()) {
+              <span class="game-editor__saved">
+                <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3">
+                  <path d="M5 12.5l4.5 4.5L19 7.5" stroke-linecap="round" stroke-linejoin="round" />
+                </svg>
+                Changes saved
+              </span>
+            }
+          </output>
+        </div>
+      </form>
+
+      <section class="game-editor__images card">
+        <h2>Box art</h2>
+        <div class="game-editor__box-art">
+          @if (boxArt(); as art) {
+            <img [src]="art.url" alt="{{ g.title }} box art" />
+          } @else {
+            <span class="empty-state">No box art yet</span>
+          }
+        </div>
+        <label class="btn btn-secondary game-editor__upload">
+          {{ boxArt() ? 'Replace box art' : 'Upload box art' }}
+          <input type="file" accept="image/*" [disabled]="busy()" (change)="onBoxArtSelected($event)" />
+        </label>
+
+        <h2>Screenshots</h2>
+        @if (screenshots().length === 0) {
+          <p class="empty-state">No screenshots yet</p>
+        }
+        <div class="game-editor__screenshots">
+          @for (screenshot of screenshots(); track screenshot.id) {
+            <figure class="game-editor__screenshot">
+              <img [src]="screenshot.url" alt="{{ g.title }} screenshot" />
+              <button
+                type="button"
+                class="game-editor__delete"
+                aria-label="Delete screenshot"
+                title="Delete screenshot"
+                [disabled]="busy()"
+                (click)="deleteImage(screenshot)"
+              >
+                ✕
+              </button>
+            </figure>
+          }
+        </div>
+        <label class="btn btn-secondary game-editor__upload">
+          Add screenshots
+          <input type="file" accept="image/*" multiple [disabled]="busy()" (change)="onScreenshotsSelected($event)" />
+        </label>
+      </section>
+    </div>
+
+    <div class="game-editor__messages">
+      <app-field-error [message]="errorMessage()" />
+    </div>
+
+    @if (!g.is_approved) {
+      <div class="game-editor__approve card">
+        <p>Approving saves the details above and makes this game available to every player.</p>
+        <button type="button" class="btn btn-approve" [disabled]="form.invalid || busy()" (click)="approve()">
+          Approve
+        </button>
+      </div>
+    }
+
+    <section class="game-editor__danger card" aria-labelledby="danger-zone-title">
+      <div>
+        <h2 id="danger-zone-title">Delete this game</h2>
+        <p>Removes it from the catalog and from every player's library, along with their ratings.</p>
+      </div>
+      <button type="button" class="btn btn-danger-outline" [disabled]="busy()" (click)="deleteDialogOpen.set(true)">
+        Delete game
+      </button>
+    </section>
+
+    <app-delete-game-dialog
+      [game]="deleteDialogOpen() ? g : null"
+      (deleted)="onGameDeleted($event)"
+      (cancelled)="deleteDialogOpen.set(false)"
+    />
+  } @else {
+    <p>Loading…</p>
+  }
+</div>

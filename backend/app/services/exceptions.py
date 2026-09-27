@@ -15,3 +15,15 @@ class InvalidImageError(Exception):
 
 class GameNotFoundError(Exception):
     pass
+
+
+class ImageNotFoundError(Exception):
+    pass
+
+
+class SystemNotFoundError(Exception):
+    pass
+
+
+class ImpersonationError(Exception):
+    pass

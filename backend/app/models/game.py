@@ -1,6 +1,6 @@
 from datetime import datetime
 
-from sqlalchemy import CheckConstraint, DateTime, ForeignKey, Integer, String, Text, func
+from sqlalchemy import Boolean, CheckConstraint, DateTime, ForeignKey, Integer, String, Text, func, true
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -20,7 +20,9 @@ class Game(Base):
     system_id: Mapped[int] = mapped_column(ForeignKey("systems.id"), nullable=False)
     esrb_rating: Mapped[str] = mapped_column(String(10), nullable=False)
     created_by_user_id: Mapped[int] = mapped_column(ForeignKey("users.id"), nullable=False)
+    is_approved: Mapped[bool] = mapped_column(Boolean, nullable=False, server_default=true())
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
     system: Mapped["System"] = relationship()
+    created_by: Mapped["User"] = relationship()
     images: Mapped[list["GameImage"]] = relationship(order_by="GameImage.display_order")

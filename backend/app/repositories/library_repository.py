@@ -1,6 +1,6 @@
 from decimal import Decimal
 
-from sqlalchemy import func, select
+from sqlalchemy import delete, func, select
 from sqlalchemy.orm import Session, joinedload
 
 from app.models.game import Game
@@ -65,3 +65,7 @@ class LibraryRepository:
     def delete(self, entry: UserGameLibrary) -> None:
         self._db.delete(entry)
         self._db.flush()
+
+    def delete_for_game(self, game_id: int) -> None:
+        """Reviews reference library entries, so delete those first (see ReviewRepository.delete_for_game)."""
+        self._db.execute(delete(UserGameLibrary).where(UserGameLibrary.game_id == game_id))

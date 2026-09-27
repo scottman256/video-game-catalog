@@ -71,3 +71,17 @@ def test_sort_by_title_ascending(db_session):
     sorted_entries = service.list_sorted(user_id, "title", "asc")
 
     assert [entry.game.title for entry in sorted_entries] == ["A Game", "B Game"]
+
+
+def test_remove_entry_also_removes_its_review(db_session):
+    system_id, user_id = _setup(db_session)
+    game_id = GameRepository(db_session).create("Mario", None, 1985, system_id, "E", user_id).id
+    service = LibraryService(db_session)
+    entry = service.add_to_library(user_id, game_id, "digital", None)
+    ReviewRepository(db_session).upsert(entry.id, {"fun_factor": 8})
+
+    service.remove_entry(service.get_library_entry(entry.id))
+    db_session.commit()
+
+    assert service.get_library_entry(entry.id) is None
+    assert ReviewRepository(db_session).get_by_library_id(entry.id) is None

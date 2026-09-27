@@ -14,6 +14,7 @@ const ENTRY: LibraryEntry = {
     release_year: 1985,
     system: { id: 1, name: 'NES', release_year: 1985 },
     box_art_url: null,
+    is_approved: true,
   },
   ownership_type: 'digital',
   price_paid: null,
@@ -73,6 +74,16 @@ describe('MyGames', () => {
       ['title', 'asc'],
       ['title', 'desc'],
     ]);
+  });
+
+  it('marks pending games with the pending approval pill', () => {
+    listResult = of([ENTRY, { ...ENTRY, id: 2, game: { ...ENTRY.game, id: 11, is_approved: false } }]);
+    const fixture = TestBed.createComponent(MyGames);
+    fixture.detectChanges();
+
+    const cards = fixture.nativeElement.querySelectorAll('.game-card');
+    expect(cards[0].querySelector('app-pending-badge')).toBeNull();
+    expect(cards[1].querySelector('app-pending-badge')).not.toBeNull();
   });
 
   it('stops loading and shows an error when the request fails', () => {

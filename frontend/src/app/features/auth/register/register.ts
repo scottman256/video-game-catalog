@@ -57,13 +57,13 @@ export class Register {
     this.errorMessage.set(null);
     this.submitting.set(true);
     this.auth.register(this.form.getRawValue()).subscribe({
-      next: () => this.goToMyGames(),
+      next: () => this.goHome(),
       error: (error: RegisterErrorResponse) => this.handleError(error),
     });
   }
 
-  private goToMyGames(): void {
-    this.router.navigateByUrl('/my-games').then(() => this.submitting.set(false));
+  private goHome(): void {
+    this.router.navigateByUrl(this.auth.homeUrl()).then(() => this.submitting.set(false));
   }
 
   private handleError(error: RegisterErrorResponse): void {

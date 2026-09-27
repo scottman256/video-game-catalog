@@ -1,4 +1,4 @@
-from sqlalchemy import select
+from sqlalchemy import delete, select
 from sqlalchemy.orm import Session
 
 from app.models.user_game_library import UserGameLibrary
@@ -30,6 +30,10 @@ class ReviewRepository:
             .where(UserGameLibrary.user_id == user_id)
         )
         return list(self._db.scalars(stmt))
+
+    def delete_for_game(self, game_id: int) -> None:
+        library_ids_for_game = select(UserGameLibrary.id).where(UserGameLibrary.game_id == game_id)
+        self._db.execute(delete(UserGameReview).where(UserGameReview.user_library_id.in_(library_ids_for_game)))
 
     def list_for_game(self, game_id: int) -> list[UserGameReview]:
         stmt = (

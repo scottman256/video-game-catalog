@@ -6,13 +6,14 @@ import { Game } from '../../core/models/game.model';
 import { OwnershipType } from '../../core/models/library-entry.model';
 import { GameService } from '../../core/services/game';
 import { LibraryService } from '../../core/services/library';
+import { PendingBadge } from '../../shared/components/pending-badge/pending-badge';
 import { StarScore } from '../../shared/components/star-score/star-score';
 import { FieldError } from '../../shared/components/field-error/field-error';
 import { AddGameForm } from './add-game-form/add-game-form';
 
 @Component({
   selector: 'app-search-add-game',
-  imports: [ReactiveFormsModule, StarScore, FieldError, AddGameForm],
+  imports: [ReactiveFormsModule, PendingBadge, StarScore, FieldError, AddGameForm],
   templateUrl: './search-add-game.html',
   styleUrl: './search-add-game.scss',
 })

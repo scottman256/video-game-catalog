@@ -1,0 +1,54 @@
+.delete-dialog {
+  width: 420px;
+  max-width: 92vw;
+  padding: 1.5rem 1.75rem;
+
+  h2 {
+    margin: 0.75rem 0 0.5rem;
+    font-size: 1.2rem;
+    overflow-wrap: anywhere;
+  }
+
+  p,
+  ul {
+    margin: 0.4rem 0;
+    line-height: 1.45;
+  }
+
+  ul {
+    padding-left: 1.2rem;
+    color: var(--color-text-muted);
+  }
+}
+
+.delete-dialog__icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--color-danger) 14%, transparent);
+  color: var(--color-danger);
+
+  svg {
+    width: 1.35rem;
+    height: 1.35rem;
+  }
+}
+
+.delete-dialog__warning {
+  font-weight: 700;
+}
+
+.delete-dialog__error {
+  color: var(--color-danger);
+  font-weight: 600;
+}
+
+.delete-dialog__actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.6rem;
+  margin-top: 1.25rem;
+}

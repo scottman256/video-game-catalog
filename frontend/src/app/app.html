@@ -1,9 +1,41 @@
 @if (auth.currentUser(); as user) {
+  @if (user.impersonated_by; as admin) {
+    <div class="impersonation-banner" role="status">
+      <span class="impersonation-banner__message">
+        <span class="impersonation-banner__icon" aria-hidden="true">👤</span>
+        You are acting as <strong>{{ user.username }}</strong> · signed in as {{ admin.username }}
+      </span>
+      <nav class="impersonation-banner__links" aria-label="Admin screens">
+        <a routerLink="/admin/games">All Games</a>
+        <a routerLink="/admin/queue">Approval Queue</a>
+        <a routerLink="/admin/users">Assume User</a>
+      </nav>
+      <button type="button" class="impersonation-banner__stop" (click)="stopImpersonation()">
+        Stop acting as {{ user.username }}
+      </button>
+    </div>
+  }
   <header class="app-header">
-    <div class="app-header__brand">🎮 Game Catalog</div>
+    <div class="app-header__brand">
+      🎮 Game Catalog
+      @if (auth.isAdminView()) {
+        <span class="app-header__admin-tag">Admin</span>
+      }
+    </div>
     <nav class="app-header__nav">
-      <a routerLink="/my-games" routerLinkActive="active">My Games</a>
-      <a routerLink="/search" routerLinkActive="active">Search / Add Game</a>
+      @if (auth.isAdminView()) {
+        <a routerLink="/admin/games" routerLinkActive="active">All Games</a>
+        <a routerLink="/admin/queue" routerLinkActive="active">
+          Approval Queue
+          @if (pendingCount() > 0) {
+            <span class="app-header__count" [attr.aria-label]="pendingCount() + ' pending'">{{ pendingCount() }}</span>
+          }
+        </a>
+        <a routerLink="/admin/users" routerLinkActive="active">Assume User</a>
+      } @else {
+        <a routerLink="/my-games" routerLinkActive="active">My Games</a>
+        <a routerLink="/search" routerLinkActive="active">Search / Add Game</a>
+      }
     </nav>
     <div class="app-header__user">
       <div class="user-menu">

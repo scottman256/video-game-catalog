@@ -18,6 +18,7 @@ const LIBRARY_ENTRY: LibraryEntry = {
     release_year: 1985,
     system: { id: 1, name: 'NES', release_year: 1985 },
     box_art_url: null,
+    is_approved: true,
   },
   ownership_type: 'digital',
   price_paid: null,
@@ -38,6 +39,7 @@ const GAME: Game = {
   ],
   community_average_score: 3.5,
   in_library: true,
+  is_approved: true,
 };
 
 const REVIEW: Review = {
@@ -51,11 +53,13 @@ const REVIEW: Review = {
 
 describe('GameDetail', () => {
   let libraryGetByIdResult: Observable<LibraryEntry>;
+  let game: Game;
 
   beforeEach(async () => {
     libraryGetByIdResult = of(LIBRARY_ENTRY);
+    game = GAME;
     const libraryStub = { getById: () => libraryGetByIdResult };
-    const gameStub = { getById: () => of(GAME) };
+    const gameStub = { getById: () => of(game) };
     const reviewStub = { get: () => of(REVIEW) };
     const activatedRouteStub = { snapshot: { paramMap: convertToParamMap({ id: '5' }) } };
 
@@ -91,6 +95,22 @@ describe('GameDetail', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('Mario');
+  });
+
+  it('shows the pending approval pill under the title for a pending game', () => {
+    game = { ...GAME, is_approved: false };
+    const fixture = TestBed.createComponent(GameDetail);
+    fixture.detectChanges();
+
+    const pill = fixture.nativeElement.querySelector('h1 + app-pending-badge');
+    expect(pill.textContent).toContain('Pending Admin Approval');
+  });
+
+  it('shows no pending pill for an approved game', () => {
+    const fixture = TestBed.createComponent(GameDetail);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-pending-badge')).toBeNull();
   });
 
   it('stops loading and shows an error when the library entry cannot be fetched', () => {

@@ -1,0 +1,42 @@
+@if (game(); as g) {
+  <div class="modal-backdrop" (click)="cancel()" (keydown.escape)="cancel()" tabindex="-1">
+    <div
+      class="delete-dialog card"
+      role="alertdialog"
+      aria-modal="true"
+      aria-labelledby="delete-dialog-title"
+      aria-describedby="delete-dialog-description"
+      (click)="$event.stopPropagation()"
+    >
+      <div class="delete-dialog__icon" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+          <path d="M3 6h18M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2m3 0-1 14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2L4 6" />
+          <path d="M10 11v6M14 11v6" />
+        </svg>
+      </div>
+      <h2 id="delete-dialog-title">Delete “{{ g.title }}”?</h2>
+      <div id="delete-dialog-description">
+        <p>This permanently removes the game from the catalog, including:</p>
+        <ul>
+          <li>its box art and screenshots</li>
+          <li>every player's library entry for it</li>
+          <li>every player's ratings for it</li>
+        </ul>
+        <p class="delete-dialog__warning">This can't be undone.</p>
+      </div>
+
+      @if (errorMessage(); as error) {
+        <p class="delete-dialog__error" role="alert">{{ error }}</p>
+      }
+
+      <div class="delete-dialog__actions">
+        <button #cancelButton type="button" class="btn btn-secondary" [disabled]="deleting()" (click)="cancel()">
+          Cancel
+        </button>
+        <button type="button" class="btn btn-danger" [disabled]="deleting()" (click)="confirm(g)">
+          {{ deleting() ? 'Deleting…' : 'Delete game' }}
+        </button>
+      </div>
+    </div>
+  </div>
+}

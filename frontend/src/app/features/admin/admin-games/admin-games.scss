@@ -1,0 +1,51 @@
+.admin-games__filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem 1.25rem;
+  align-items: center;
+  margin-bottom: 1.25rem;
+}
+
+.admin-games__search {
+  display: flex;
+  gap: 0.6rem;
+  flex: 1;
+  min-width: 260px;
+
+  input {
+    flex: 1;
+    padding: 0.55rem 0.7rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+    color: var(--color-text);
+  }
+}
+
+.admin-games__status {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-weight: 500;
+
+  select {
+    padding: 0.45rem 0.6rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+  }
+}
+
+.admin-games__deleted {
+  display: block;
+
+  span {
+    display: inline-block;
+    margin-bottom: 1rem;
+    padding: 0.55rem 0.9rem;
+    border-radius: var(--radius);
+    border-left: 4px solid var(--color-success);
+    background: var(--color-surface);
+    box-shadow: var(--shadow);
+    font-weight: 600;
+  }
+}

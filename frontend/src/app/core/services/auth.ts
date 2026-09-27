@@ -1,5 +1,5 @@
 import { HttpClient } from '@angular/common/http';
-import { Injectable, signal } from '@angular/core';
+import { Injectable, computed, signal } from '@angular/core';
 import { Observable, tap } from 'rxjs';
 
 import { environment } from '../../../environments/environment';
@@ -17,12 +17,23 @@ export interface LoginPayload {
   password: string;
 }
 
+export const ADMIN_HOME_URL = '/admin/games';
+export const USER_HOME_URL = '/my-games';
+
 @Injectable({
   providedIn: 'root',
 })
 export class Auth {
   private readonly baseUrl = `${environment.apiBaseUrl}/auth`;
+  private readonly impersonationUrl = `${environment.apiBaseUrl}/admin/impersonation`;
+
   readonly currentUser = signal<User | null>(null);
+
+  /** An admin on their own admin screens, not acting as anyone. */
+  readonly isAdminView = computed(() => !!this.currentUser()?.is_admin);
+  readonly isImpersonating = computed(() => !!this.currentUser()?.impersonated_by);
+  readonly hasAdminAccess = computed(() => this.isAdminView() || this.isImpersonating());
+  readonly homeUrl = computed(() => (this.isAdminView() ? ADMIN_HOME_URL : USER_HOME_URL));
 
   constructor(private readonly http: HttpClient) {}
 
@@ -44,5 +55,15 @@ export class Auth {
 
   refresh(): Observable<User> {
     return this.http.post<User>(`${this.baseUrl}/refresh`, {}).pipe(tap((user) => this.currentUser.set(user)));
+  }
+
+  startImpersonation(userId: number): Observable<User> {
+    return this.http
+      .post<User>(this.impersonationUrl, { user_id: userId })
+      .pipe(tap((user) => this.currentUser.set(user)));
+  }
+
+  stopImpersonation(): Observable<User> {
+    return this.http.delete<User>(this.impersonationUrl).pipe(tap((user) => this.currentUser.set(user)));
   }
 }

@@ -1,3 +1,4 @@
+from app.repositories.game_repository import GameRepository
 from app.repositories.system_repository import SystemRepository
 
 REGISTER_A = {
@@ -12,6 +13,12 @@ REGISTER_B = {
     "password": "Sup3r$3cret",
     "confirm_password": "Sup3r$3cret",
 }
+
+
+def _approve(db_session, game_id: int) -> None:
+    repository = GameRepository(db_session)
+    repository.approve(repository.get_by_id(game_id))
+    db_session.commit()
 
 
 def _create_game(client, system_id: int, title: str = "Super Mario Bros.") -> int:
@@ -65,6 +72,7 @@ def test_community_average_across_multiple_users(client, db_session):
         "/me/library", json={"game_id": game_id, "ownership_type": "digital", "price_paid": None}
     ).json()
     client.put(f"/me/library/{alice_entry['id']}/review", json={"fun_factor": 10})
+    _approve(db_session, game_id)
     client.post("/auth/logout")
 
     client.post("/auth/register", json=REGISTER_B)

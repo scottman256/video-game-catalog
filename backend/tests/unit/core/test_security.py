@@ -3,6 +3,8 @@ import pytest
 
 from app.core.security import (
     create_access_token,
+    create_impersonation_token,
+    decode_impersonation_token,
     decode_token,
     hash_password,
     hash_refresh_token,
@@ -44,3 +46,23 @@ def test_hash_refresh_token_is_deterministic_and_one_way():
 
     assert first_hash == second_hash
     assert first_hash != token
+
+
+def test_impersonation_token_round_trips_admin_and_target():
+    token = create_impersonation_token(admin_id=1, target_user_id=7)
+
+    assert decode_impersonation_token(token) == (1, 7)
+
+
+def test_impersonation_token_cannot_be_used_as_access_token():
+    token = create_impersonation_token(admin_id=1, target_user_id=7)
+
+    with pytest.raises(jwt.InvalidTokenError):
+        decode_token(token)
+
+
+def test_access_token_cannot_be_used_as_impersonation_token():
+    token = create_access_token(user_id=42)
+
+    with pytest.raises(jwt.InvalidTokenError):
+        decode_impersonation_token(token)

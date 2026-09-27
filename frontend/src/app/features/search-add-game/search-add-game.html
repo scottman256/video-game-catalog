@@ -14,6 +14,9 @@
             <div>
               <strong>{{ game.title }}</strong>
               <span class="results-list__meta">{{ game.release_year }} · {{ game.system.name }}</span>
+              @if (!game.is_approved) {
+                <app-pending-badge />
+              }
               @if (game.community_average_score !== null) {
                 <app-star-score [score]="game.community_average_score" />
               }

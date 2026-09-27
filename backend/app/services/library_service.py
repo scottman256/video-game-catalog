@@ -24,7 +24,8 @@ class LibraryService:
     def add_to_library(
         self, user_id: int, game_id: int, ownership_type: str, price_paid: Decimal | None
     ) -> UserGameLibrary:
-        if not self._games.get_by_id(game_id):
+        game = self._games.get_by_id(game_id)
+        if not game or not (game.is_approved or game.created_by_user_id == user_id):
             raise GameNotFoundError(f"Game {game_id} does not exist")
         if self._library.get_by_user_and_game(user_id, game_id):
             raise DuplicateFieldError("game_id", "Game is already in your library")

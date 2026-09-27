@@ -2,6 +2,7 @@ import io
 
 from PIL import Image
 
+from app.repositories.game_repository import GameRepository
 from app.repositories.system_repository import SystemRepository
 
 REGISTER_PAYLOAD = {
@@ -23,6 +24,12 @@ def _register_and_create_system(client, db_session) -> int:
     system = SystemRepository(db_session).create("Nintendo Entertainment System", 1985)
     db_session.commit()
     return system.id
+
+
+def _approve(db_session, game_id: int) -> None:
+    repository = GameRepository(db_session)
+    repository.approve(repository.get_by_id(game_id))
+    db_session.commit()
 
 
 def _create_game(client, system_id: int) -> int:
@@ -141,6 +148,7 @@ def test_search_marks_games_already_in_the_library(client, db_session):
 def test_in_library_is_scoped_to_the_requesting_user(client, db_session):
     system_id = _register_and_create_system(client, db_session)
     game_id = _create_game(client, system_id)
+    _approve(db_session, game_id)
     client.post("/me/library", json={"game_id": game_id, "ownership_type": "digital", "price_paid": None})
     client.post("/auth/logout")
     client.post(

@@ -34,6 +34,9 @@
         </div>
         <div class="game-card__body">
           <h3>{{ entry.game.title }}</h3>
+          @if (!entry.game.is_approved) {
+            <app-pending-badge class="game-card__pending" />
+          }
           <p class="game-card__meta">{{ entry.game.release_year }} · {{ entry.game.system.name }}</p>
           <app-star-score [score]="entry.weighted_score" />
         </div>
