@@ -1,0 +1,51 @@
+.notice-region {
+  display: block;
+}
+
+.notice {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.85rem;
+  max-width: 100%;
+  margin-bottom: 1rem;
+  padding: 0.5rem 0.55rem 0.5rem 0.9rem;
+  border-radius: var(--radius);
+  border-left: 4px solid var(--color-success);
+  background: var(--color-surface);
+  box-shadow: var(--shadow);
+  font-weight: 600;
+}
+
+.notice__message {
+  overflow-wrap: anywhere;
+}
+
+.notice__dismiss {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 1.5rem;
+  height: 1.5rem;
+  padding: 0;
+  border: none;
+  border-radius: 50%;
+  background: var(--color-dismiss);
+  color: white;
+  cursor: pointer;
+  transition: filter 0.15s ease;
+
+  svg {
+    width: 0.8rem;
+    height: 0.8rem;
+  }
+
+  &:hover {
+    filter: brightness(0.88);
+  }
+
+  &:focus-visible {
+    outline: 2px solid var(--color-dismiss);
+    outline-offset: 2px;
+  }
+}

@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 
 import { AdminGameSummary, ApprovalStatus } from '../../../core/models/admin.model';
 import { AdminService } from '../../../core/services/admin';
+import { Notice } from '../../../shared/components/notice/notice';
 import { AdminGameList } from '../admin-game-list/admin-game-list';
 import { DeleteGameDialog, DeletableGame } from '../delete-game-dialog/delete-game-dialog';
 
@@ -11,7 +12,7 @@ export const DELETED_GAME_TITLE = 'deletedGameTitle';
 
 @Component({
   selector: 'app-admin-games',
-  imports: [AdminGameList, DeleteGameDialog],
+  imports: [AdminGameList, DeleteGameDialog, Notice],
   templateUrl: './admin-games.html',
   styleUrl: './admin-games.scss',
 })

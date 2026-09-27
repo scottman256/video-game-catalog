@@ -1,0 +1,12 @@
+<output class="notice-region" aria-live="polite">
+  @if (message(); as text) {
+    <span class="notice">
+      <span class="notice__message">{{ text }}</span>
+      <button type="button" class="notice__dismiss" aria-label="Dismiss notice" title="Dismiss" (click)="dismissed.emit()">
+        <svg viewBox="0 0 24 24" aria-hidden="true" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round">
+          <path d="M7 7l10 10M17 7L7 17" />
+        </svg>
+      </button>
+    </span>
+  }
+</output>
