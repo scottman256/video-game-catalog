@@ -74,7 +74,7 @@ describe('AdminGames', () => {
     );
     expect(titles).toEqual(['The Legend of Zelda']);
     expect(fixture.nativeElement.querySelector('[role="alertdialog"]')).toBeNull();
-    expect(fixture.nativeElement.querySelector('.admin-games__deleted').textContent).toContain(
+    expect(fixture.nativeElement.querySelector('.notice').textContent).toContain(
       '“Super Mario Bros” was deleted.',
     );
   });
@@ -87,5 +87,17 @@ describe('AdminGames', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.textContent).toContain('“Pragmata” was deleted.');
+  });
+
+  it('lets the admin dismiss the deleted notice', () => {
+    const router = TestBed.inject(Router) as unknown as { currentNavigation: () => unknown };
+    router.currentNavigation = () => ({ extras: { state: { [DELETED_GAME_TITLE]: 'Pragmata' } } });
+    const fixture = TestBed.createComponent(AdminGames);
+    fixture.detectChanges();
+
+    fixture.nativeElement.querySelector('.notice__dismiss').click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.notice')).toBeNull();
   });
 });

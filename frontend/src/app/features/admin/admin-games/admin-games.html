@@ -21,11 +21,7 @@
     </label>
   </div>
 
-  <output class="admin-games__deleted" aria-live="polite">
-    @if (deletedMessage(); as message) {
-      <span>{{ message }}</span>
-    }
-  </output>
+  <app-notice [message]="deletedMessage()" (dismissed)="deletedMessage.set(null)" />
 
   @if (errorMessage(); as error) {
     <p class="empty-state">{{ error }}</p>
