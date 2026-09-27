@@ -3,12 +3,14 @@ import { HttpTestingController, provideHttpClientTesting } from '@angular/common
 import { TestBed } from '@angular/core/testing';
 
 import { environment } from '../../../environments/environment';
+import { ADMIN, ADMIN_ACTING_AS_PLAYER, PLAYER } from '../../testing/session-fixtures';
 import { Auth } from './auth';
 
 describe('Auth', () => {
   let service: Auth;
   let httpMock: HttpTestingController;
-  const user = { id: 1, username: 'scott', email: 'scott@example.com' };
+  const user = PLAYER;
+  const impersonationUrl = `${environment.apiBaseUrl}/admin/impersonation`;
 
   beforeEach(() => {
     TestBed.configureTestingModule({
@@ -51,5 +53,54 @@ describe('Auth', () => {
     httpMock.expectOne(`${environment.apiBaseUrl}/auth/me`).flush(user);
 
     expect(service.currentUser()).toEqual(user);
+  });
+
+  it('starts impersonation and switches the session to the assumed user', () => {
+    service.currentUser.set(ADMIN);
+
+    service.startImpersonation(PLAYER.id).subscribe();
+    const request = httpMock.expectOne(impersonationUrl);
+    request.flush(ADMIN_ACTING_AS_PLAYER);
+
+    expect(request.request.method).toBe('POST');
+    expect(request.request.body).toEqual({ user_id: PLAYER.id });
+    expect(service.currentUser()).toEqual(ADMIN_ACTING_AS_PLAYER);
+  });
+
+  it('stops impersonation and returns the session to the admin', () => {
+    service.currentUser.set(ADMIN_ACTING_AS_PLAYER);
+
+    service.stopImpersonation().subscribe();
+    const request = httpMock.expectOne(impersonationUrl);
+    request.flush(ADMIN);
+
+    expect(request.request.method).toBe('DELETE');
+    expect(service.currentUser()).toEqual(ADMIN);
+  });
+
+  describe('session roles', () => {
+    it('gives a regular player no admin access', () => {
+      service.currentUser.set(PLAYER);
+
+      expect(service.isAdminView()).toBe(false);
+      expect(service.hasAdminAccess()).toBe(false);
+      expect(service.homeUrl()).toBe('/my-games');
+    });
+
+    it('sends an admin to the admin screens', () => {
+      service.currentUser.set(ADMIN);
+
+      expect(service.isAdminView()).toBe(true);
+      expect(service.homeUrl()).toBe('/admin/games');
+    });
+
+    it('keeps admin access while impersonating but shows the player views', () => {
+      service.currentUser.set(ADMIN_ACTING_AS_PLAYER);
+
+      expect(service.isImpersonating()).toBe(true);
+      expect(service.isAdminView()).toBe(false);
+      expect(service.hasAdminAccess()).toBe(true);
+      expect(service.homeUrl()).toBe('/my-games');
+    });
   });
 });

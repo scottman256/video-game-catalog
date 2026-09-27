@@ -59,6 +59,14 @@ Seed the video game systems dropdown (NES onward, idempotent — safe to re-run)
 python scripts/seed_systems.py
 ```
 
+Create an admin account, or promote an existing account to admin (an existing account keeps its password):
+
+```bash
+python -m scripts.create_admin <username> <email> <password>
+```
+
+This script skips the registration password rules, so use a strong password anywhere other than local development. Admins review player-submitted games in the approval queue, can edit any game in the global catalog, and can act as a player through "Assume User". Games that players submit stay hidden from everyone but the submitter until an admin approves them.
+
 The SQLite database file (`video_game_catalog.db`) persists in this directory across restarts; delete it and re-run the two commands above for a clean slate.
 
 ## Running the API

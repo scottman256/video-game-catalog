@@ -55,3 +55,13 @@ def test_duplicate_email_raises_integrity_error(db_session):
 
     with pytest.raises(IntegrityError):
         repo.create(username="other", email="scott@example.com")
+
+
+def test_list_non_admins_excludes_admins_and_orders_by_username(db_session):
+    repo = UserRepository(db_session)
+    repo.create(username="zelda", email="zelda@example.com")
+    admin = repo.create(username="admin", email="admin@example.com")
+    repo.set_admin(admin, True)
+    repo.create(username="link", email="link@example.com")
+
+    assert [user.username for user in repo.list_non_admins()] == ["link", "zelda"]

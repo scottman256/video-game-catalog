@@ -1,7 +1,8 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user, get_storage
+from app.api.deps import get_library_user, get_storage
+from app.api.mappers import box_art_url
 from app.db.session import get_db
 from app.models.user import User
 from app.models.user_game_library import UserGameLibrary
@@ -26,7 +27,7 @@ router = APIRouter(prefix="/me/library", tags=["library"])
 def list_my_library(
     sort: SortField = "title",
     direction: SortDirection = "asc",
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_library_user),
     db: Session = Depends(get_db),
     storage: StorageBackend = Depends(get_storage),
 ) -> list[LibraryEntryOut]:
@@ -37,7 +38,7 @@ def list_my_library(
 @router.post("", response_model=LibraryEntryOut, status_code=status.HTTP_201_CREATED)
 def add_to_library(
     payload: LibraryCreateRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_library_user),
     db: Session = Depends(get_db),
     storage: StorageBackend = Depends(get_storage),
 ) -> LibraryEntryOut:
@@ -55,7 +56,7 @@ def add_to_library(
 @router.get("/{library_id}", response_model=LibraryEntryOut)
 def get_library_entry(
     library_id: int,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_library_user),
     db: Session = Depends(get_db),
     storage: StorageBackend = Depends(get_storage),
 ) -> LibraryEntryOut:
@@ -67,7 +68,7 @@ def get_library_entry(
 def update_library_entry(
     library_id: int,
     payload: LibraryUpdateRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_library_user),
     db: Session = Depends(get_db),
     storage: StorageBackend = Depends(get_storage),
 ) -> LibraryEntryOut:
@@ -78,7 +79,7 @@ def update_library_entry(
 
 @router.delete("/{library_id}", status_code=status.HTTP_204_NO_CONTENT)
 def delete_library_entry(
-    library_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    library_id: int, current_user: User = Depends(get_library_user), db: Session = Depends(get_db)
 ) -> None:
     entry = _get_owned_entry_or_404(db, library_id, current_user.id)
     LibraryService(db).remove_entry(entry)
@@ -92,13 +93,13 @@ def _get_owned_entry_or_404(db: Session, library_id: int, user_id: int) -> UserG
 
 
 def _to_entry_out(entry: UserGameLibrary, storage: StorageBackend) -> LibraryEntryOut:
-    box_art = next((img for img in entry.game.images if img.kind == "box_art"), None)
     game_summary = LibraryGameSummary(
         id=entry.game.id,
         title=entry.game.title,
         release_year=entry.game.release_year,
         system=SystemOut.model_validate(entry.game.system),
-        box_art_url=storage.url_for(box_art.storage_key) if box_art else None,
+        box_art_url=box_art_url(entry.game, storage),
+        is_approved=entry.game.is_approved,
     )
     return LibraryEntryOut(
         id=entry.id,

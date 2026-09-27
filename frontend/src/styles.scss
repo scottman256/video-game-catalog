@@ -8,6 +8,13 @@
   --color-primary-hover: #4338ca;
   --color-danger: #dc2626;
   --color-success: #16a34a;
+  --color-approve: #16a34a;
+  --color-approve-hover: #15803d;
+  --color-pending-bg: #fcd34d;
+  --color-pending-border: #d97706;
+  --color-pending-text: #451a03;
+  --color-impersonation-bg: #7c2d12;
+  --color-impersonation-text: #fff7ed;
   --radius: 10px;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.08), 0 1px 2px rgba(0, 0, 0, 0.04);
   --font-sans: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -24,6 +31,13 @@
   --color-primary-hover: #8f88ee;
   --color-danger: #f87171;
   --color-success: #4ade80;
+  --color-approve: #16a34a;
+  --color-approve-hover: #15803d;
+  --color-pending-bg: #fbbf24;
+  --color-pending-border: #fde68a;
+  --color-pending-text: #1c1003;
+  --color-impersonation-bg: #9a3412;
+  --color-impersonation-text: #fff7ed;
   --shadow: 0 1px 3px rgba(0, 0, 0, 0.4), 0 1px 2px rgba(0, 0, 0, 0.3);
   color-scheme: dark;
 }
@@ -102,6 +116,35 @@ textarea {
   }
 }
 
+.btn-approve {
+  background: var(--color-approve);
+  color: white;
+
+  &:hover:not(:disabled) {
+    background: var(--color-approve-hover);
+  }
+}
+
+.btn-danger {
+  background: var(--color-danger);
+  color: white;
+
+  &:hover:not(:disabled) {
+    filter: brightness(0.92);
+  }
+}
+
+.btn-danger-outline {
+  background: transparent;
+  border-color: var(--color-danger);
+  color: var(--color-danger);
+
+  &:hover:not(:disabled) {
+    background: var(--color-danger);
+    color: white;
+  }
+}
+
 .auth-card {
   max-width: 380px;
   margin: 3rem auto;
@@ -159,4 +202,26 @@ textarea {
     border: 1px solid var(--color-border);
     border-radius: var(--radius);
   }
+}
+
+.admin-page {
+  max-width: 900px;
+  margin: 0 auto;
+}
+
+.admin-page__header {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.25rem;
+
+  h1 {
+    margin: 0 0 0.25rem;
+  }
+}
+
+.admin-page__subtitle {
+  margin: 0;
+  color: var(--color-text-muted);
 }

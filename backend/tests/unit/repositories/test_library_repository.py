@@ -83,3 +83,18 @@ def test_delete_removes_entry(db_session):
     repo.delete(entry)
 
     assert repo.get_by_id(entry.id) is None
+
+
+def test_delete_for_game_removes_every_users_entry_for_that_game_only(db_session):
+    user_id, game_id = _make_user_and_game(db_session)
+    other_user_id = UserRepository(db_session).create(username="other", email="other@example.com").id
+    other_game_id = GameRepository(db_session).create("Zelda", None, 1986, 1, "E", user_id).id
+    repo = LibraryRepository(db_session)
+    for owner_id in (user_id, other_user_id):
+        repo.create(owner_id, game_id, "digital", None)
+    repo.create(user_id, other_game_id, "digital", None)
+
+    repo.delete_for_game(game_id)
+
+    assert repo.list_game_ids_for_user(user_id) == {other_game_id}
+    assert repo.list_game_ids_for_user(other_user_id) == set()

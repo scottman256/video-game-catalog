@@ -2,13 +2,11 @@ import { Component, OnInit, inject, output, signal } from '@angular/core';
 import { FormBuilder, ReactiveFormsModule, Validators } from '@angular/forms';
 import { forkJoin, of, switchMap } from 'rxjs';
 
-import { Game } from '../../../core/models/game.model';
+import { ESRB_RATINGS, Game } from '../../../core/models/game.model';
 import { GameSystem } from '../../../core/models/system.model';
 import { GameService } from '../../../core/services/game';
 import { SystemService } from '../../../core/services/system';
 import { FieldError } from '../../../shared/components/field-error/field-error';
-
-const ESRB_RATINGS = ['EC', 'E', 'E10+', 'T', 'M', 'AO', 'RP'];
 
 @Component({
   selector: 'app-add-game-form',

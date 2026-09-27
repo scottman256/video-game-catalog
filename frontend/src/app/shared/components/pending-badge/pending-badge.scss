@@ -1,0 +1,20 @@
+:host {
+  display: inline-block;
+}
+
+// A stadium-shaped pill with a contrasting outline, in the spirit of the classic Nintendo logo oval.
+.pending-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.3rem 0.95rem;
+  border-radius: 999px;
+  border: 2px solid var(--color-pending-border);
+  background: var(--color-pending-bg);
+  color: var(--color-pending-text);
+  font-size: 0.75rem;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  line-height: 1.2;
+}

@@ -31,7 +31,7 @@ describe('authInterceptor', () => {
     http.get(`${environment.apiBaseUrl}/games`).subscribe();
 
     httpMock.expectOne(`${environment.apiBaseUrl}/games`).flush(null, { status: 401, statusText: 'Unauthorized' });
-    httpMock.expectOne(`${environment.apiBaseUrl}/auth/refresh`).flush({ id: 1, username: 'scott', email: 'a@b.com' });
+    httpMock.expectOne(`${environment.apiBaseUrl}/auth/refresh`).flush({ id: 1, username: 'scott', email: 'a@b.com', is_admin: false, impersonated_by: null });
     const retried = httpMock.expectOne(`${environment.apiBaseUrl}/games`);
     retried.flush([]);
 

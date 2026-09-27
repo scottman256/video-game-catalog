@@ -1,0 +1,40 @@
+<ul class="admin-game-list">
+  @for (game of games(); track game.id) {
+    <li class="admin-game-list__row card">
+      <a class="admin-game-list__link" [routerLink]="['/admin/games', game.id]">
+        <div class="admin-game-list__art">
+          @if (game.box_art_url) {
+            <img [src]="game.box_art_url" alt="{{ game.title }} box art" />
+          } @else {
+            <span>No Art</span>
+          }
+        </div>
+        <div class="admin-game-list__details">
+          <strong class="admin-game-list__title">{{ game.title }}</strong>
+          @if (!game.is_approved) {
+            <app-pending-badge />
+          }
+          <span class="admin-game-list__meta">{{ game.release_year }} · {{ game.system.name }}</span>
+          <span class="admin-game-list__meta">
+            Submitted by {{ game.submitted_by }} on {{ game.submitted_at | date: 'mediumDate' }}
+          </span>
+        </div>
+      </a>
+      <div class="admin-game-list__actions">
+        <a class="admin-game-list__action btn btn-secondary" [routerLink]="['/admin/games', game.id]">
+          {{ actionLabel() }}
+        </a>
+        @if (showDelete()) {
+          <button
+            type="button"
+            class="admin-game-list__delete btn btn-danger-outline"
+            [attr.aria-label]="'Delete ' + game.title"
+            (click)="deleteRequested.emit(game)"
+          >
+            Delete
+          </button>
+        }
+      </div>
+    </li>
+  }
+</ul>

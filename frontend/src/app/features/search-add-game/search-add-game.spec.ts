@@ -17,6 +17,7 @@ const GAME: Game = {
   images: [],
   community_average_score: null,
   in_library: false,
+  is_approved: true,
 };
 
 describe('SearchAddGame', () => {
@@ -176,6 +177,18 @@ describe('SearchAddGame', () => {
 
     const wrapper = fixture.nativeElement.querySelector('.results-list__owned');
     expect(wrapper.getAttribute('title')).toBe('You already own this game');
+  });
+
+  it('marks the submitter\'s own pending game in the results', () => {
+    const fixture = searchAndRender({ ...GAME, is_approved: false });
+
+    expect(fixture.nativeElement.querySelector('.results-list__item app-pending-badge')).not.toBeNull();
+  });
+
+  it('shows no pending pill for approved games', () => {
+    const fixture = searchAndRender(GAME);
+
+    expect(fixture.nativeElement.querySelector('app-pending-badge')).toBeNull();
   });
 
   it('does not start the add flow for a game already owned', () => {

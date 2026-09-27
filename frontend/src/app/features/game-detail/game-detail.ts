@@ -10,12 +10,13 @@ import { LibraryService } from '../../core/services/library';
 import { ReviewService } from '../../core/services/review';
 import { ImageCarousel } from '../../shared/components/image-carousel/image-carousel';
 import { ImageModal } from '../../shared/components/image-modal/image-modal';
+import { PendingBadge } from '../../shared/components/pending-badge/pending-badge';
 import { StarScore } from '../../shared/components/star-score/star-score';
 import { ReviewForm } from './review-form/review-form';
 
 @Component({
   selector: 'app-game-detail',
-  imports: [ImageCarousel, ImageModal, StarScore, ReviewForm],
+  imports: [ImageCarousel, ImageModal, PendingBadge, StarScore, ReviewForm],
   templateUrl: './game-detail.html',
   styleUrl: './game-detail.scss',
 })

@@ -1,0 +1,41 @@
+<div class="admin-page">
+  <div class="admin-page__header">
+    <div>
+      <h1>All Games</h1>
+      <p class="admin-page__subtitle">Every game in the global catalog. Changes here are visible to all players.</p>
+    </div>
+  </div>
+
+  <div class="admin-games__filters">
+    <form class="admin-games__search" (submit)="$event.preventDefault(); search(queryInput.value)">
+      <input #queryInput type="search" placeholder="Search by title…" aria-label="Search by title" />
+      <button type="submit" class="btn btn-primary">Search</button>
+    </form>
+    <label class="admin-games__status">
+      <span>Show</span>
+      <select aria-label="Approval status" [value]="status()" (change)="changeStatus($any($event.target).value)">
+        <option value="all">All games</option>
+        <option value="pending">Pending approval</option>
+        <option value="approved">Approved</option>
+      </select>
+    </label>
+  </div>
+
+  <output class="admin-games__deleted" aria-live="polite">
+    @if (deletedMessage(); as message) {
+      <span>{{ message }}</span>
+    }
+  </output>
+
+  @if (errorMessage(); as error) {
+    <p class="empty-state">{{ error }}</p>
+  } @else if (loading()) {
+    <p>Loading…</p>
+  } @else if (games().length === 0) {
+    <p class="empty-state">No games match.</p>
+  } @else {
+    <app-admin-game-list [games]="games()" [showDelete]="true" (deleteRequested)="gameToDelete.set($event)" />
+  }
+</div>
+
+<app-delete-game-dialog [game]="gameToDelete()" (deleted)="onGameDeleted($event)" (cancelled)="gameToDelete.set(null)" />

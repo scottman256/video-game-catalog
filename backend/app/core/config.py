@@ -11,6 +11,7 @@ class Settings(BaseSettings):
     jwt_algorithm: str = "HS256"
     access_token_ttl_minutes: int = 15
     refresh_token_ttl_days: int = 7
+    impersonation_ttl_minutes: int = 480
     upload_dir: str = "app/uploads"
     cors_origins: list[str] = ["http://localhost:4200"]
     public_base_url: str = "http://localhost:8000"

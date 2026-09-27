@@ -1,0 +1,35 @@
+<div class="admin-page">
+  <div class="admin-page__header">
+    <div>
+      <h1>Assume User</h1>
+      <p class="admin-page__subtitle">
+        Act as a player to manage their games and reviews. You stay signed in as yourself and can stop at any time.
+      </p>
+    </div>
+  </div>
+
+  <app-field-error [message]="errorMessage()" />
+
+  @if (loading()) {
+    <p>Loading…</p>
+  } @else if (users().length === 0 && !errorMessage()) {
+    <p class="empty-state">There are no player accounts yet.</p>
+  } @else {
+    <ul class="assume-user__list">
+      @for (user of users(); track user.id) {
+        <li class="assume-user__row card">
+          <app-user-avatar [imageUrl]="user.profile_picture_url" [username]="user.username" />
+          <div class="assume-user__details">
+            <strong>{{ user.username }}</strong>
+            <span class="assume-user__meta">{{ user.email }} · Joined {{ user.created_at | date: 'mediumDate' }}</span>
+          </div>
+          @if (actingAsUserId() === user.id) {
+            <span class="assume-user__current">Currently acting as</span>
+          } @else {
+            <button type="button" class="btn btn-primary" (click)="assume(user)">Act as {{ user.username }}</button>
+          }
+        </li>
+      }
+    </ul>
+  }
+</div>

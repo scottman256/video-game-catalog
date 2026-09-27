@@ -12,6 +12,9 @@
     </div>
     <div class="game-detail__info">
       <h1>{{ g.title }}</h1>
+      @if (!g.is_approved) {
+        <app-pending-badge class="game-detail__pending" />
+      }
       <p class="game-detail__meta">{{ g.release_year }} · {{ g.system.name }} · ESRB {{ g.esrb_rating }}</p>
       @if (g.summary) {
         <p class="game-detail__summary">{{ g.summary }}</p>

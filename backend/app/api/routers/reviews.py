@@ -1,7 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_current_user
+from app.api.deps import get_library_user
 from app.db.session import get_db
 from app.models.user import User
 from app.models.user_game_review import UserGameReview
@@ -14,7 +14,7 @@ router = APIRouter(prefix="/me/library/{library_id}/review", tags=["reviews"])
 
 @router.get("", response_model=ReviewOut)
 def get_review(
-    library_id: int, current_user: User = Depends(get_current_user), db: Session = Depends(get_db)
+    library_id: int, current_user: User = Depends(get_library_user), db: Session = Depends(get_db)
 ) -> ReviewOut:
     _ensure_owns_entry(db, library_id, current_user.id)
     return _to_review_out(ReviewService(db).get_review(library_id))
@@ -24,7 +24,7 @@ def get_review(
 def upsert_review(
     library_id: int,
     payload: ReviewUpsertRequest,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(get_library_user),
     db: Session = Depends(get_db),
 ) -> ReviewOut:
     _ensure_owns_entry(db, library_id, current_user.id)

@@ -19,7 +19,10 @@ describe('Register', () => {
 
   beforeEach(async () => {
     registerCalls = [];
-    const authStub = { register: (payload: unknown) => (registerCalls.push(payload), registerResult) };
+    const authStub = {
+      register: (payload: unknown) => (registerCalls.push(payload), registerResult),
+      homeUrl: () => '/my-games',
+    };
 
     await TestBed.configureTestingModule({
       imports: [Register],
@@ -49,7 +52,7 @@ describe('Register', () => {
   });
 
   it('submits when the form is valid', () => {
-    registerResult = of({ id: 1, username: 'scott', email: 'scott@example.com' });
+    registerResult = of({ id: 1, username: 'scott', email: 'scott@example.com', is_admin: false, impersonated_by: null });
     const fixture = TestBed.createComponent(Register);
     fixture.componentInstance['form'].setValue(VALID_PAYLOAD);
 

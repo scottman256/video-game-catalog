@@ -32,3 +32,4 @@ class GameOut(BaseModel):
     images: list[GameImageOut]
     community_average_score: float | None
     in_library: bool
+    is_approved: bool

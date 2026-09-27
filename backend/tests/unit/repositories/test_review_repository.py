@@ -44,3 +44,17 @@ def test_list_for_game_only_returns_reviews_for_that_game(db_session):
     reviews = ReviewRepository(db_session).list_for_game(entry.game_id)
 
     assert len(reviews) == 1
+
+
+def test_delete_for_game_removes_only_that_games_reviews(db_session):
+    entry = _make_library_entry(db_session)
+    other_game_id = GameRepository(db_session).create("Zelda", None, 1986, entry.game.system_id, "E", entry.user_id).id
+    other_entry = LibraryRepository(db_session).create(entry.user_id, other_game_id, "digital", None)
+    repo = ReviewRepository(db_session)
+    repo.upsert(entry.id, {"fun_factor": 10})
+    repo.upsert(other_entry.id, {"fun_factor": 6})
+
+    repo.delete_for_game(entry.game_id)
+
+    assert repo.list_for_game(entry.game_id) == []
+    assert len(repo.list_for_game(other_game_id)) == 1

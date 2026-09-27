@@ -16,6 +16,7 @@ const GAME: Game = {
   images: [],
   community_average_score: null,
   in_library: false,
+  is_approved: true,
 };
 
 describe('AddGameForm', () => {

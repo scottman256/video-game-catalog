@@ -28,6 +28,7 @@ class LibraryGameSummary(BaseModel):
     release_year: int
     system: SystemOut
     box_art_url: str | None
+    is_approved: bool
 
 
 class LibraryEntryOut(BaseModel):
