@@ -20,6 +20,15 @@ export interface LibraryEntry {
   price_paid: string | null;
   added_at: string;
   weighted_score: number | null;
+  completed_on: string | null;
+  fully_completed_on: string | null;
+  hours_played: string | null;
+}
+
+export interface PlayProgressPayload {
+  completed_on: string | null;
+  fully_completed_on: string | null;
+  hours_played: string | null;
 }
 
 export interface LibraryCreatePayload {

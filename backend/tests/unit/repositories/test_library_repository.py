@@ -1,3 +1,6 @@
+from datetime import date
+from decimal import Decimal
+
 from app.repositories.game_repository import GameRepository
 from app.repositories.library_repository import LibraryRepository
 from app.repositories.system_repository import SystemRepository
@@ -98,3 +101,21 @@ def test_delete_for_game_removes_every_users_entry_for_that_game_only(db_session
 
     assert repo.list_game_ids_for_user(user_id) == {other_game_id}
     assert repo.list_game_ids_for_user(other_user_id) == set()
+
+
+def test_update_play_progress_sets_and_clears_every_field(db_session):
+    user_id, game_id = _make_user_and_game(db_session)
+    repo = LibraryRepository(db_session)
+    entry = repo.create(user_id, game_id, "digital", None)
+
+    repo.update_play_progress(entry, date(2026, 9, 1), date(2026, 9, 20), Decimal("42.5"))
+    saved = repo.get_by_id(entry.id)
+    assert (saved.completed_on, saved.fully_completed_on, saved.hours_played) == (
+        date(2026, 9, 1),
+        date(2026, 9, 20),
+        Decimal("42.5"),
+    )
+
+    repo.update_play_progress(entry, None, None, None)
+    cleared = repo.get_by_id(entry.id)
+    assert (cleared.completed_on, cleared.fully_completed_on, cleared.hours_played) == (None, None, None)

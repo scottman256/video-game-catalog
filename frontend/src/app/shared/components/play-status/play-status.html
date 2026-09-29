@@ -1,0 +1,12 @@
+@if (fullyCompletedOn(); as fullyCompleted) {
+  <span class="status-badge status-badge--fully-completed" title="100% completed {{ fullyCompleted | date: 'mediumDate' : 'UTC' }}">
+    🏆 100%
+  </span>
+} @else if (completedOn(); as completed) {
+  <span class="status-badge status-badge--completed" title="Completed {{ completed | date: 'mediumDate' : 'UTC' }}">
+    ✓ Completed
+  </span>
+}
+@if (hoursLabel(); as hours) {
+  <span class="hours-played">{{ hours }}</span>
+}

@@ -43,6 +43,9 @@ def to_library_entry_out(entry: UserGameLibrary, storage: StorageBackend) -> Lib
         price_paid=entry.price_paid,
         added_at=entry.added_at,
         weighted_score=compute_weighted_score(entry.review),
+        completed_on=entry.completed_on,
+        fully_completed_on=entry.fully_completed_on,
+        hours_played=entry.hours_played,
     )
 
 

@@ -30,7 +30,8 @@
         </div>
       </div>
       @if (libraryEntry(); as entry) {
-        <app-ownership-form [entry]="entry" (saved)="onOwnershipSaved($event)" />
+        <app-ownership-form [entry]="entry" (saved)="onLibraryEntrySaved($event)" />
+        <app-play-progress-form [entry]="entry" (saved)="onLibraryEntrySaved($event)" />
         <app-review-form [libraryId]="entry.id" [review]="review()" (saved)="onReviewSaved($event)" />
       }
     </div>

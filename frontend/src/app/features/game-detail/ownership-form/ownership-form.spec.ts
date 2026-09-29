@@ -19,6 +19,9 @@ const ENTRY: LibraryEntry = {
   price_paid: '19.99',
   added_at: '2024-01-01T00:00:00Z',
   weighted_score: null,
+  completed_on: null,
+  fully_completed_on: null,
+  hours_played: null,
 };
 
 describe('OwnershipForm', () => {

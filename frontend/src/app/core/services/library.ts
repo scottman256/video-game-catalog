@@ -8,6 +8,7 @@ import {
   LibraryEntry,
   LibrarySortField,
   OwnershipType,
+  PlayProgressPayload,
   SortDirection,
 } from '../models/library-entry.model';
 
@@ -36,6 +37,10 @@ export class LibraryService {
       ownership_type: ownershipType,
       price_paid: pricePaid,
     });
+  }
+
+  updatePlayProgress(libraryId: number, payload: PlayProgressPayload): Observable<LibraryEntry> {
+    return this.http.put<LibraryEntry>(`${this.baseUrl}/${libraryId}/progress`, payload);
   }
 
   remove(libraryId: number): Observable<void> {

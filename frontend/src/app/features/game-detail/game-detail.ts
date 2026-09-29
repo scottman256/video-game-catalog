@@ -13,11 +13,12 @@ import { ImageModal } from '../../shared/components/image-modal/image-modal';
 import { PendingBadge } from '../../shared/components/pending-badge/pending-badge';
 import { StarScore } from '../../shared/components/star-score/star-score';
 import { OwnershipForm } from './ownership-form/ownership-form';
+import { PlayProgressForm } from './play-progress-form/play-progress-form';
 import { ReviewForm } from './review-form/review-form';
 
 @Component({
   selector: 'app-game-detail',
-  imports: [ImageCarousel, ImageModal, PendingBadge, StarScore, OwnershipForm, ReviewForm],
+  imports: [ImageCarousel, ImageModal, PendingBadge, StarScore, OwnershipForm, PlayProgressForm, ReviewForm],
   templateUrl: './game-detail.html',
   styleUrl: './game-detail.scss',
 })
@@ -48,7 +49,7 @@ export class GameDetail {
     });
   }
 
-  onOwnershipSaved(entry: LibraryEntry): void {
+  onLibraryEntrySaved(entry: LibraryEntry): void {
     this.libraryEntry.set(entry);
   }
 

@@ -2,11 +2,20 @@
   <div>
     <h1>My Games</h1>
     @if (!loading() && !errorMessage()) {
-      <p class="game-count" aria-live="polite">
+      <p class="game-count" [class.game-count--filtered]="filtering()" aria-live="polite">
         @if (filtering()) {
-          Showing {{ visibleEntries().length }} of {{ entries().length }} {{ entries().length === 1 ? 'game' : 'games' }}
+          <span class="game-count__scope" title="Totals on this line cover only the games matching your filters">
+            Showing {{ summary().gameCount }} of {{ entries().length }} {{ entries().length === 1 ? 'game' : 'games' }}
+          </span>
         } @else {
-          {{ entries().length }} {{ entries().length === 1 ? 'game' : 'games' }}
+          <span>{{ summary().gameCount }} {{ summary().gameCount === 1 ? 'game' : 'games' }}</span>
+        }
+        <span class="game-count__stat">{{ hoursLabel() }}</span>
+        @if (summary().completedCount > 0) {
+          <span class="game-count__stat">{{ summary().completedCount }} completed</span>
+        }
+        @if (summary().fullyCompletedCount > 0) {
+          <span class="game-count__stat">{{ summary().fullyCompletedCount }} at 100%</span>
         }
       </p>
     }
@@ -109,6 +118,12 @@
             }
             <p class="game-card__meta">{{ entry.game.release_year }} · {{ entry.game.system.name }}</p>
             <app-star-score [score]="entry.weighted_score" />
+            <app-play-status
+              class="game-card__play-status"
+              [completedOn]="entry.completed_on"
+              [fullyCompletedOn]="entry.fully_completed_on"
+              [hoursPlayed]="entry.hours_played"
+            />
           </div>
         </a>
       }

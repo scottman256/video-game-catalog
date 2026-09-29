@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from decimal import Decimal
 from typing import Literal
 
@@ -22,6 +22,12 @@ class LibraryUpdateRequest(BaseModel):
     price_paid: Decimal | None = Field(default=None, ge=0, max_digits=10, decimal_places=2)
 
 
+class PlayProgressRequest(BaseModel):
+    completed_on: date | None = None
+    fully_completed_on: date | None = None
+    hours_played: Decimal | None = Field(default=None, ge=0, max_digits=7, decimal_places=1)
+
+
 class LibraryGameSummary(BaseModel):
     id: int
     title: str
@@ -38,3 +44,6 @@ class LibraryEntryOut(BaseModel):
     price_paid: Decimal | None
     added_at: datetime
     weighted_score: float | None
+    completed_on: date | None
+    fully_completed_on: date | None
+    hours_played: Decimal | None

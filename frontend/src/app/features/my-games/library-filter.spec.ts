@@ -12,6 +12,9 @@ function entry(id: number, title: string, overrides: Partial<LibraryEntry> = {})
     price_paid: null,
     added_at: '2026-01-01T00:00:00Z',
     weighted_score: null,
+    completed_on: null,
+    fully_completed_on: null,
+    hours_played: null,
     ...overrides,
   };
 }
