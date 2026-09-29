@@ -10,11 +10,12 @@ from app.schemas.library import (
     LibraryCreateRequest,
     LibraryEntryOut,
     LibraryUpdateRequest,
+    PlayProgressRequest,
     SortDirection,
     SortField,
 )
-from app.services.exceptions import DuplicateFieldError, GameNotFoundError
-from app.services.library_service import LibraryService
+from app.services.exceptions import DuplicateFieldError, GameNotFoundError, InvalidPlayProgressError
+from app.services.library_service import LibraryService, PlayProgress
 from app.storage.base import StorageBackend
 
 router = APIRouter(prefix="/me/library", tags=["library"])
@@ -71,6 +72,22 @@ def update_library_entry(
 ) -> LibraryEntryOut:
     entry = _get_owned_entry_or_404(db, library_id, current_user.id)
     updated = LibraryService(db).update_entry(entry, payload.ownership_type, payload.price_paid)
+    return to_library_entry_out(updated, storage)
+
+
+@router.put("/{library_id}/progress", response_model=LibraryEntryOut)
+def update_play_progress(
+    library_id: int,
+    payload: PlayProgressRequest,
+    current_user: User = Depends(get_library_user),
+    db: Session = Depends(get_db),
+    storage: StorageBackend = Depends(get_storage),
+) -> LibraryEntryOut:
+    entry = _get_owned_entry_or_404(db, library_id, current_user.id)
+    try:
+        updated = LibraryService(db).update_play_progress(entry, PlayProgress(**payload.model_dump()))
+    except InvalidPlayProgressError as error:
+        raise HTTPException(status.HTTP_422_UNPROCESSABLE_CONTENT, str(error)) from error
     return to_library_entry_out(updated, storage)
 
 

@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 
 import pytest
@@ -7,8 +8,8 @@ from app.repositories.review_repository import ReviewRepository
 from app.repositories.system_repository import SystemRepository
 from app.repositories.user_repository import UserRepository
 from app.repositories.wishlist_repository import WishlistRepository
-from app.services.exceptions import DuplicateFieldError, GameNotFoundError
-from app.services.library_service import LibraryService
+from app.services.exceptions import DuplicateFieldError, GameNotFoundError, InvalidPlayProgressError
+from app.services.library_service import LibraryService, PlayProgress, validate_play_progress
 
 
 def _setup(db_session):
@@ -97,3 +98,42 @@ def test_add_to_library_takes_the_game_off_the_wishlist(db_session):
     LibraryService(db_session).add_to_library(user_id, game_id, "digital", None)
 
     assert wishlist.get_by_user_and_game(user_id, game_id) is None
+
+
+def test_update_play_progress_saves_completion_dates_and_hours(db_session):
+    system_id, user_id = _setup(db_session)
+    game_id = GameRepository(db_session).create("Mario", None, 1985, system_id, "E", user_id).id
+    service = LibraryService(db_session)
+    entry = service.add_to_library(user_id, game_id, "digital", None)
+    progress = PlayProgress(date(2026, 9, 1), date(2026, 9, 1), Decimal("12.5"))
+
+    updated = service.update_play_progress(entry, progress)
+
+    assert (updated.completed_on, updated.fully_completed_on, updated.hours_played) == (
+        date(2026, 9, 1),
+        date(2026, 9, 1),
+        Decimal("12.5"),
+    )
+
+
+def test_hours_can_be_logged_without_completing_the_game():
+    validate_play_progress(PlayProgress(None, None, Decimal("3")))
+
+
+def test_completed_without_100_percent_is_valid():
+    validate_play_progress(PlayProgress(date(2026, 9, 1), None, None))
+
+
+def test_100_percent_requires_the_game_to_be_completed():
+    progress = PlayProgress(None, date(2026, 9, 1), None)
+
+    with pytest.raises(InvalidPlayProgressError, match="must be completed"):
+        validate_play_progress(progress)
+
+
+def test_100_percent_date_cannot_be_before_the_completion_date():
+    progress = PlayProgress(date(2026, 9, 10), date(2026, 9, 9), None)
+
+    with pytest.raises(InvalidPlayProgressError, match="can't be before"):
+        validate_play_progress(progress)
+

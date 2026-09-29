@@ -27,3 +27,7 @@ class SystemNotFoundError(Exception):
 
 class ImpersonationError(Exception):
     pass
+
+
+class InvalidPlayProgressError(Exception):
+    pass

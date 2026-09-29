@@ -48,6 +48,16 @@ describe('LibraryService', () => {
     req.flush({});
   });
 
+  it('saves play progress for a library entry', () => {
+    const payload = { completed_on: '2026-09-01', fully_completed_on: null, hours_played: '12.5' };
+    service.updatePlayProgress(1, payload).subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/me/library/1/progress`);
+    expect(req.request.method).toBe('PUT');
+    expect(req.request.body).toEqual(payload);
+    req.flush({});
+  });
+
   it('removes a library entry', () => {
     service.remove(1).subscribe();
 

@@ -12,9 +12,22 @@
 }
 
 .game-count {
+  display: flex;
+  flex-wrap: wrap;
+  column-gap: 0.5rem;
   margin: 0;
   color: var(--color-text-muted);
   font-size: 0.9rem;
+}
+
+.game-count__stat::before {
+  content: '·';
+  margin-right: 0.5rem;
+}
+
+.game-count--filtered .game-count__scope {
+  color: var(--color-primary);
+  font-weight: 600;
 }
 
 .sort-controls {
@@ -110,4 +123,8 @@
   margin: 0 0 0.5rem;
   font-size: 0.8rem;
   color: var(--color-text-muted);
+}
+
+.game-card__play-status {
+  margin-top: 0.5rem;
 }

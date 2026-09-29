@@ -1,3 +1,4 @@
+from datetime import date
 from decimal import Decimal
 
 from sqlalchemy import delete, func, select
@@ -59,6 +60,19 @@ class LibraryRepository:
             entry.ownership_type = ownership_type
         if price_paid is not None:
             entry.price_paid = price_paid
+        self._db.flush()
+        return entry
+
+    def update_play_progress(
+        self,
+        entry: UserGameLibrary,
+        completed_on: date | None,
+        fully_completed_on: date | None,
+        hours_played: Decimal | None,
+    ) -> UserGameLibrary:
+        entry.completed_on = completed_on
+        entry.fully_completed_on = fully_completed_on
+        entry.hours_played = hours_played
         self._db.flush()
         return entry
 

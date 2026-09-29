@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+from datetime import date
 from decimal import Decimal
 
 from sqlalchemy.orm import Session
@@ -6,7 +8,7 @@ from app.models.user_game_library import UserGameLibrary
 from app.repositories.game_repository import GameRepository
 from app.repositories.library_repository import LibraryRepository
 from app.repositories.wishlist_repository import WishlistRepository
-from app.services.exceptions import DuplicateFieldError, GameNotFoundError
+from app.services.exceptions import DuplicateFieldError, GameNotFoundError, InvalidPlayProgressError
 from app.services.game_service import is_game_collectible_by
 from app.services.review_service import compute_weighted_score
 
@@ -16,6 +18,22 @@ _SORT_KEYS = {
     "system": lambda entry: entry.game.system.name.lower(),
     "added_at": lambda entry: entry.added_at,
 }
+
+
+@dataclass(frozen=True)
+class PlayProgress:
+    completed_on: date | None
+    fully_completed_on: date | None
+    hours_played: Decimal | None
+
+
+def validate_play_progress(progress: PlayProgress) -> None:
+    if progress.fully_completed_on is None:
+        return
+    if progress.completed_on is None:
+        raise InvalidPlayProgressError("A game must be completed before it can be 100% completed")
+    if progress.fully_completed_on < progress.completed_on:
+        raise InvalidPlayProgressError("The 100% completion date can't be before the completion date")
 
 
 class LibraryService:
@@ -62,6 +80,12 @@ class LibraryService:
         self, entry: UserGameLibrary, ownership_type: str | None, price_paid: Decimal | None
     ) -> UserGameLibrary:
         return self._library.update(entry, ownership_type, price_paid)
+
+    def update_play_progress(self, entry: UserGameLibrary, progress: PlayProgress) -> UserGameLibrary:
+        validate_play_progress(progress)
+        return self._library.update_play_progress(
+            entry, progress.completed_on, progress.fully_completed_on, progress.hours_played
+        )
 
     def remove_entry(self, entry: UserGameLibrary) -> None:
         self._library.delete(entry)

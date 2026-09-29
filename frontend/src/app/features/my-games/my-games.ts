@@ -4,12 +4,15 @@ import { RouterLink } from '@angular/router';
 import { LibraryEntry, LibrarySortField, SortDirection } from '../../core/models/library-entry.model';
 import { LibraryService } from '../../core/services/library';
 import { PendingBadge } from '../../shared/components/pending-badge/pending-badge';
+import { PlayStatus } from '../../shared/components/play-status/play-status';
 import { StarScore } from '../../shared/components/star-score/star-score';
+import { formatHoursPlayed } from '../../shared/utils/hours';
 import { LibraryFilters, NO_FILTERS, filterLibrary, hasActiveFilters, systemsInLibrary } from './library-filter';
+import { summarizeLibrary } from './library-summary';
 
 @Component({
   selector: 'app-my-games',
-  imports: [RouterLink, PendingBadge, StarScore],
+  imports: [RouterLink, PendingBadge, PlayStatus, StarScore],
   templateUrl: './my-games.html',
   styleUrl: './my-games.scss',
 })
@@ -26,6 +29,8 @@ export class MyGames {
   protected readonly visibleEntries = computed(() => filterLibrary(this.entries(), this.filters()));
   protected readonly systems = computed(() => systemsInLibrary(this.entries()));
   protected readonly filtering = computed(() => hasActiveFilters(this.filters()));
+  protected readonly summary = computed(() => summarizeLibrary(this.visibleEntries()));
+  protected readonly hoursLabel = computed(() => formatHoursPlayed(this.summary().hoursPlayed));
   protected readonly ratingOptions = [1, 2, 3, 4, 5];
 
   constructor() {

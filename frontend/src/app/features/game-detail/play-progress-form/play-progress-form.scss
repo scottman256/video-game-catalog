@@ -1,0 +1,47 @@
+.play-progress-form {
+  margin-top: 1.5rem;
+  padding-top: 1.5rem;
+  border-top: 1px solid var(--color-border);
+}
+
+.play-progress-form__row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.75rem;
+  min-height: 2.4rem;
+  margin-bottom: 0.5rem;
+
+  input[type='date'],
+  input[type='number'] {
+    padding: 0.4rem 0.5rem;
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius);
+    background: var(--color-surface);
+    color: var(--color-text);
+  }
+
+  input[type='number'] {
+    width: 7rem;
+  }
+}
+
+.play-progress-form__check {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  min-width: 9.5rem;
+  cursor: pointer;
+}
+
+.play-progress-form__actions {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.75rem;
+}
+
+.play-progress-form__saved {
+  color: var(--color-success);
+  font-size: 0.9rem;
+}

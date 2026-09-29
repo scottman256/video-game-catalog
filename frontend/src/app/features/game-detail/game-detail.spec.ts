@@ -24,6 +24,9 @@ const LIBRARY_ENTRY: LibraryEntry = {
   price_paid: null,
   added_at: '2024-01-01T00:00:00Z',
   weighted_score: 4.5,
+  completed_on: null,
+  fully_completed_on: null,
+  hours_played: null,
 };
 
 const GAME: Game = {
@@ -114,18 +117,19 @@ describe('GameDetail', () => {
     expect(fixture.nativeElement.querySelector('app-pending-badge')).toBeNull();
   });
 
-  it('shows the ownership form for the library entry', () => {
+  it('shows the ownership and play progress forms for the library entry', () => {
     const fixture = TestBed.createComponent(GameDetail);
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('app-ownership-form')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('app-play-progress-form')).not.toBeNull();
   });
 
-  it('keeps the updated library entry after the ownership type is saved', () => {
+  it('keeps the updated library entry after ownership or progress is saved', () => {
     const fixture = TestBed.createComponent(GameDetail);
     fixture.detectChanges();
 
-    fixture.componentInstance.onOwnershipSaved({ ...LIBRARY_ENTRY, ownership_type: 'physical' });
+    fixture.componentInstance.onLibraryEntrySaved({ ...LIBRARY_ENTRY, ownership_type: 'physical' });
 
     expect(fixture.componentInstance['libraryEntry']()?.ownership_type).toBe('physical');
   });
