@@ -19,6 +19,7 @@ export interface Game {
   images: GameImage[];
   community_average_score: number | null;
   in_library: boolean;
+  in_wishlist: boolean;
   is_approved: boolean;
 }
 

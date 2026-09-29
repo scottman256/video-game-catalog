@@ -6,6 +6,7 @@ import { Game } from '../../core/models/game.model';
 import { OwnershipType } from '../../core/models/library-entry.model';
 import { GameService } from '../../core/services/game';
 import { LibraryService } from '../../core/services/library';
+import { WishlistService } from '../../core/services/wishlist';
 import { PendingBadge } from '../../shared/components/pending-badge/pending-badge';
 import { StarScore } from '../../shared/components/star-score/star-score';
 import { FieldError } from '../../shared/components/field-error/field-error';
@@ -20,6 +21,7 @@ import { AddGameForm } from './add-game-form/add-game-form';
 export class SearchAddGame {
   private readonly gameService = inject(GameService);
   private readonly libraryService = inject(LibraryService);
+  private readonly wishlistService = inject(WishlistService);
   private readonly router = inject(Router);
   private readonly formBuilder = inject(FormBuilder);
 
@@ -30,6 +32,8 @@ export class SearchAddGame {
   protected readonly addingGameId = signal<number | null>(null);
   protected readonly ownershipType = signal<OwnershipType>('digital');
   protected readonly pricePaid = signal('');
+  protected readonly wishlistingGameId = signal<number | null>(null);
+  protected readonly targetPrice = signal('');
   protected readonly errorMessage = signal<string | null>(null);
 
   search(): void {
@@ -51,6 +55,7 @@ export class SearchAddGame {
   }
 
   startAdding(gameId: number): void {
+    this.wishlistingGameId.set(null);
     this.addingGameId.set(gameId);
     this.ownershipType.set('digital');
     this.pricePaid.set('');
@@ -67,9 +72,29 @@ export class SearchAddGame {
       });
   }
 
+  startWishlisting(gameId: number): void {
+    this.addingGameId.set(null);
+    this.wishlistingGameId.set(gameId);
+    this.targetPrice.set('');
+    this.errorMessage.set(null);
+  }
+
+  confirmWishlist(gameId: number): void {
+    this.wishlistService.add({ game_id: gameId, target_price: this.targetPrice() || null }).subscribe({
+      next: () => this.markWishlisted(gameId),
+      error: (error: { error?: { detail?: string } }) =>
+        this.errorMessage.set(error.error?.detail ?? 'Could not add this game to your wishlist.'),
+    });
+  }
+
   onGameCreated(game: Game): void {
     this.results.set([game]);
     this.showAddForm.set(false);
     this.startAdding(game.id);
+  }
+
+  private markWishlisted(gameId: number): void {
+    this.wishlistingGameId.set(null);
+    this.results.update((games) => games?.map((game) => (game.id === gameId ? { ...game, in_wishlist: true } : game)) ?? null);
   }
 }

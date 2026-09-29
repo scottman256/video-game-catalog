@@ -9,6 +9,7 @@ from app.repositories.library_repository import LibraryRepository
 from app.repositories.review_repository import ReviewRepository
 from app.repositories.system_repository import SystemRepository
 from app.repositories.user_repository import UserRepository
+from app.repositories.wishlist_repository import WishlistRepository
 from app.services.exceptions import GameNotFoundError
 from app.services.game_deletion_service import GameDeletionService
 from app.services.game_image_service import GameImageService
@@ -55,6 +56,16 @@ def test_delete_game_removes_it_from_every_library_along_with_reviews(db_session
     library = LibraryRepository(db_session)
     assert all(library.list_game_ids_for_user(owner_id) == {catalog["kept_id"]} for owner_id in catalog["owner_ids"])
     assert ReviewRepository(db_session).list_for_game(catalog["doomed_id"]) == []
+
+
+def test_delete_game_removes_it_from_every_wishlist(db_session, catalog):
+    carol_id = UserRepository(db_session).create(username="carol", email="carol@example.com").id
+    wishlist = WishlistRepository(db_session)
+    wishlist.create(carol_id, catalog["doomed_id"], None)
+
+    GameDeletionService(db_session, catalog["storage"]).delete_game(catalog["doomed_id"])
+
+    assert wishlist.list_game_ids_for_user(carol_id) == set()
 
 
 def test_delete_game_removes_image_records_and_files(db_session, catalog, tmp_path):

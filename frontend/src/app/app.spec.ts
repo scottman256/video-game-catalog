@@ -68,7 +68,7 @@ describe('App', () => {
     it('shows player navigation and no banner for a regular player', () => {
       const fixture = renderSignedInAs(USER);
 
-      expect(navLabels(fixture.nativeElement)).toEqual(['My Games', 'Search / Add Game']);
+      expect(navLabels(fixture.nativeElement)).toEqual(['My Games', 'Wishlist', 'Search / Add Game']);
       expect(fixture.nativeElement.querySelector('.impersonation-banner')).toBeNull();
     });
 
@@ -83,7 +83,7 @@ describe('App', () => {
         '/admin/queue',
         '/admin/users',
       ]);
-      expect(navLabels(fixture.nativeElement)).toEqual(['My Games', 'Search / Add Game']);
+      expect(navLabels(fixture.nativeElement)).toEqual(['My Games', 'Wishlist', 'Search / Add Game']);
     });
 
     it('returns to the admin screens when the admin stops acting as the player', () => {

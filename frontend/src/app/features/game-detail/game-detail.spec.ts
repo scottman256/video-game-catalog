@@ -39,6 +39,7 @@ const GAME: Game = {
   ],
   community_average_score: 3.5,
   in_library: true,
+  in_wishlist: false,
   is_approved: true,
 };
 

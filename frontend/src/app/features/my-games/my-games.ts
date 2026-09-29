@@ -1,10 +1,11 @@
-import { Component, inject, signal } from '@angular/core';
+import { Component, computed, inject, signal } from '@angular/core';
 import { RouterLink } from '@angular/router';
 
 import { LibraryEntry, LibrarySortField, SortDirection } from '../../core/models/library-entry.model';
 import { LibraryService } from '../../core/services/library';
 import { PendingBadge } from '../../shared/components/pending-badge/pending-badge';
 import { StarScore } from '../../shared/components/star-score/star-score';
+import { LibraryFilters, NO_FILTERS, filterLibrary, hasActiveFilters, systemsInLibrary } from './library-filter';
 
 @Component({
   selector: 'app-my-games',
@@ -18,8 +19,14 @@ export class MyGames {
   protected readonly entries = signal<LibraryEntry[]>([]);
   protected readonly sort = signal<LibrarySortField>('title');
   protected readonly direction = signal<SortDirection>('asc');
+  protected readonly filters = signal<LibraryFilters>(NO_FILTERS);
   protected readonly loading = signal(true);
   protected readonly errorMessage = signal<string | null>(null);
+
+  protected readonly visibleEntries = computed(() => filterLibrary(this.entries(), this.filters()));
+  protected readonly systems = computed(() => systemsInLibrary(this.entries()));
+  protected readonly filtering = computed(() => hasActiveFilters(this.filters()));
+  protected readonly ratingOptions = [1, 2, 3, 4, 5];
 
   constructor() {
     this.load();
@@ -33,6 +40,19 @@ export class MyGames {
   toggleDirection(): void {
     this.direction.set(this.direction() === 'asc' ? 'desc' : 'asc');
     this.load();
+  }
+
+  updateFilter<K extends keyof LibraryFilters>(key: K, value: LibraryFilters[K]): void {
+    this.filters.update((current) => ({ ...current, [key]: value }));
+  }
+
+  /** Select elements report '' for the "Any" option; the filters use null for "not set". */
+  updateNumberFilter(key: 'systemId' | 'minRating' | 'maxRating', rawValue: string): void {
+    this.updateFilter(key, rawValue === '' ? null : Number(rawValue));
+  }
+
+  clearFilters(): void {
+    this.filters.set(NO_FILTERS);
   }
 
   private load(): void {

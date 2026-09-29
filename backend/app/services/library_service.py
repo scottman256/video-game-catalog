@@ -5,7 +5,9 @@ from sqlalchemy.orm import Session
 from app.models.user_game_library import UserGameLibrary
 from app.repositories.game_repository import GameRepository
 from app.repositories.library_repository import LibraryRepository
+from app.repositories.wishlist_repository import WishlistRepository
 from app.services.exceptions import DuplicateFieldError, GameNotFoundError
+from app.services.game_service import is_game_collectible_by
 from app.services.review_service import compute_weighted_score
 
 _SORT_KEYS = {
@@ -20,16 +22,22 @@ class LibraryService:
     def __init__(self, db: Session) -> None:
         self._library = LibraryRepository(db)
         self._games = GameRepository(db)
+        self._wishlist = WishlistRepository(db)
 
     def add_to_library(
         self, user_id: int, game_id: int, ownership_type: str, price_paid: Decimal | None
     ) -> UserGameLibrary:
-        game = self._games.get_by_id(game_id)
-        if not game or not (game.is_approved or game.created_by_user_id == user_id):
+        if not is_game_collectible_by(self._games.get_by_id(game_id), user_id):
             raise GameNotFoundError(f"Game {game_id} does not exist")
         if self._library.get_by_user_and_game(user_id, game_id):
             raise DuplicateFieldError("game_id", "Game is already in your library")
+        self._remove_from_wishlist(user_id, game_id)
         return self._library.create(user_id, game_id, ownership_type, price_paid)
+
+    def _remove_from_wishlist(self, user_id: int, game_id: int) -> None:
+        wishlist_entry = self._wishlist.get_by_user_and_game(user_id, game_id)
+        if wishlist_entry:
+            self._wishlist.delete(wishlist_entry)
 
     def owned_game_ids(self, user_id: int) -> set[int]:
         return self._library.list_game_ids_for_user(user_id)

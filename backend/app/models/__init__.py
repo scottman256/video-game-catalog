@@ -6,6 +6,7 @@ from app.models.system import System
 from app.models.user import User
 from app.models.user_game_library import UserGameLibrary
 from app.models.user_game_review import UserGameReview
+from app.models.user_game_wishlist import UserGameWishlist
 from app.models.user_settings import UserSettings
 
 __all__ = [
@@ -17,5 +18,6 @@ __all__ = [
     "User",
     "UserGameLibrary",
     "UserGameReview",
+    "UserGameWishlist",
     "UserSettings",
 ]

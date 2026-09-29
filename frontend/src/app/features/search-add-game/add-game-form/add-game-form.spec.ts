@@ -16,6 +16,7 @@ const GAME: Game = {
   images: [],
   community_average_score: null,
   in_library: false,
+  in_wishlist: false,
   is_approved: true,
 };
 

@@ -1,5 +1,16 @@
 <div class="page-header">
-  <h1>My Games</h1>
+  <div>
+    <h1>My Games</h1>
+    @if (!loading() && !errorMessage()) {
+      <p class="game-count" aria-live="polite">
+        @if (filtering()) {
+          Showing {{ visibleEntries().length }} of {{ entries().length }} {{ entries().length === 1 ? 'game' : 'games' }}
+        } @else {
+          {{ entries().length }} {{ entries().length === 1 ? 'game' : 'games' }}
+        }
+      </p>
+    }
+  </div>
   <div class="sort-controls">
     <label for="sort">Sort by</label>
     <select id="sort" [value]="sort()" (change)="changeSort($any($event.target).value)">
@@ -22,25 +33,85 @@
 } @else if (entries().length === 0) {
   <p class="empty-state">Your catalog is empty. <a routerLink="/search">Search for a game to add</a>.</p>
 } @else {
-  <div class="game-grid">
-    @for (entry of entries(); track entry.id) {
-      <a class="game-card card" [routerLink]="['/library', entry.id]">
-        <div class="game-card__art">
-          @if (entry.game.box_art_url) {
-            <img [src]="entry.game.box_art_url" alt="{{ entry.game.title }} box art" />
-          } @else {
-            <div class="game-card__art-placeholder">No Art</div>
-          }
-        </div>
-        <div class="game-card__body">
-          <h3>{{ entry.game.title }}</h3>
-          @if (!entry.game.is_approved) {
-            <app-pending-badge class="game-card__pending" />
-          }
-          <p class="game-card__meta">{{ entry.game.release_year }} · {{ entry.game.system.name }}</p>
-          <app-star-score [score]="entry.weighted_score" />
-        </div>
-      </a>
+  <div class="filter-bar card" role="search" aria-label="Filter my games">
+    <input
+      type="search"
+      class="filter-bar__title"
+      placeholder="Search my games…"
+      aria-label="Search my games by title"
+      [value]="filters().titleQuery"
+      (input)="updateFilter('titleQuery', $any($event.target).value)"
+    />
+    <select
+      aria-label="Filter by system"
+      [value]="filters().systemId ?? ''"
+      (change)="updateNumberFilter('systemId', $any($event.target).value)"
+    >
+      <option value="">All systems</option>
+      @for (system of systems(); track system.id) {
+        <option [value]="system.id">{{ system.name }}</option>
+      }
+    </select>
+    <select
+      aria-label="Filter by ownership"
+      [value]="filters().ownershipType ?? ''"
+      (change)="updateFilter('ownershipType', $any($event.target).value || null)"
+    >
+      <option value="">Digital &amp; physical</option>
+      <option value="digital">Digital</option>
+      <option value="physical">Physical</option>
+    </select>
+    <select
+      aria-label="Min rating"
+      [value]="filters().minRating ?? ''"
+      (change)="updateNumberFilter('minRating', $any($event.target).value)"
+    >
+      <option value="">Min rating</option>
+      @for (stars of ratingOptions; track stars) {
+        <option [value]="stars">{{ stars }}★ or more</option>
+      }
+    </select>
+    <select
+      aria-label="Max rating"
+      [value]="filters().maxRating ?? ''"
+      (change)="updateNumberFilter('maxRating', $any($event.target).value)"
+    >
+      <option value="">Max rating</option>
+      @for (stars of ratingOptions; track stars) {
+        <option [value]="stars">{{ stars }}★ or less</option>
+      }
+    </select>
+    @if (filtering()) {
+      <button type="button" class="btn btn-secondary" (click)="clearFilters()">Clear filters</button>
     }
   </div>
+
+  @if (visibleEntries().length === 0) {
+    <p class="empty-state">
+      No games match these filters.
+      <button type="button" class="link-button" (click)="clearFilters()">Clear filters</button>
+    </p>
+  } @else {
+    <div class="game-grid">
+      @for (entry of visibleEntries(); track entry.id) {
+        <a class="game-card card" [routerLink]="['/library', entry.id]">
+          <div class="game-card__art">
+            @if (entry.game.box_art_url) {
+              <img [src]="entry.game.box_art_url" alt="{{ entry.game.title }} box art" />
+            } @else {
+              <div class="game-card__art-placeholder">No Art</div>
+            }
+          </div>
+          <div class="game-card__body">
+            <h3>{{ entry.game.title }}</h3>
+            @if (!entry.game.is_approved) {
+              <app-pending-badge class="game-card__pending" />
+            }
+            <p class="game-card__meta">{{ entry.game.release_year }} · {{ entry.game.system.name }}</p>
+            <app-star-score [score]="entry.weighted_score" />
+          </div>
+        </a>
+      }
+    </div>
+  }
 }

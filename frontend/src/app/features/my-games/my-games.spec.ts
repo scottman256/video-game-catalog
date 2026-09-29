@@ -86,6 +86,54 @@ describe('MyGames', () => {
     expect(cards[1].querySelector('app-pending-badge')).not.toBeNull();
   });
 
+  it('shows the total number of games', () => {
+    listResult = of([ENTRY, { ...ENTRY, id: 2 }]);
+    const fixture = TestBed.createComponent(MyGames);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.game-count').textContent.trim()).toBe('2 games');
+  });
+
+  it('uses the singular for a single game', () => {
+    const fixture = TestBed.createComponent(MyGames);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('.game-count').textContent.trim()).toBe('1 game');
+  });
+
+  it('filters the visible games and shows how many match', () => {
+    listResult = of([ENTRY, { ...ENTRY, id: 2, game: { ...ENTRY.game, id: 11, title: 'Zelda' } }]);
+    const fixture = TestBed.createComponent(MyGames);
+    fixture.detectChanges();
+
+    fixture.componentInstance.updateFilter('titleQuery', 'zel');
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('.game-card').length).toBe(1);
+    expect(fixture.nativeElement.querySelector('.game-count').textContent.trim()).toBe('Showing 1 of 2 games');
+  });
+
+  it('treats the "any" option of a numeric filter as no filter', () => {
+    const fixture = TestBed.createComponent(MyGames);
+    fixture.componentInstance.updateNumberFilter('minRating', '4');
+    fixture.componentInstance.updateNumberFilter('systemId', '');
+
+    expect(fixture.componentInstance['filters']()).toEqual(expect.objectContaining({ minRating: 4, systemId: null }));
+  });
+
+  it('shows a clear-filters prompt when nothing matches, and clearing restores the list', () => {
+    const fixture = TestBed.createComponent(MyGames);
+    fixture.detectChanges();
+    fixture.componentInstance.updateFilter('titleQuery', 'no such game');
+    fixture.detectChanges();
+    expect(fixture.nativeElement.textContent).toContain('No games match these filters.');
+
+    fixture.componentInstance.clearFilters();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelectorAll('.game-card').length).toBe(1);
+  });
+
   it('stops loading and shows an error when the request fails', () => {
     listResult = throwError(() => new Error('failed'));
     const fixture = TestBed.createComponent(MyGames);

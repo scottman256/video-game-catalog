@@ -5,6 +5,7 @@ import { Observable, of, throwError } from 'rxjs';
 import { Game } from '../../core/models/game.model';
 import { GameService } from '../../core/services/game';
 import { LibraryService } from '../../core/services/library';
+import { WishlistService } from '../../core/services/wishlist';
 import { SearchAddGame } from './search-add-game';
 
 const GAME: Game = {
@@ -17,6 +18,7 @@ const GAME: Game = {
   images: [],
   community_average_score: null,
   in_library: false,
+  in_wishlist: false,
   is_approved: true,
 };
 
@@ -25,14 +27,19 @@ describe('SearchAddGame', () => {
   let addCalls: unknown[];
   let searchResult: Observable<Game[]>;
   let addResult: Observable<unknown>;
+  let wishlistCalls: unknown[];
+  let wishlistResult: Observable<unknown>;
 
   beforeEach(async () => {
     searchCalls = [];
     addCalls = [];
     searchResult = of([GAME]);
     addResult = of({});
+    wishlistCalls = [];
+    wishlistResult = of({});
     const gameStub = { search: (q: string) => (searchCalls.push(q), searchResult) };
     const libraryStub = { add: (payload: unknown) => (addCalls.push(payload), addResult) };
+    const wishlistStub = { add: (payload: unknown) => (wishlistCalls.push(payload), wishlistResult) };
 
     await TestBed.configureTestingModule({
       imports: [SearchAddGame],
@@ -40,6 +47,7 @@ describe('SearchAddGame', () => {
         provideRouter([]),
         { provide: GameService, useValue: gameStub },
         { provide: LibraryService, useValue: libraryStub },
+        { provide: WishlistService, useValue: wishlistStub },
       ],
     }).compileComponents();
 
@@ -198,5 +206,71 @@ describe('SearchAddGame', () => {
     fixture.detectChanges();
 
     expect(fixture.componentInstance['addingGameId']()).toBeNull();
+  });
+
+  function buttonLabels(fixture: ReturnType<typeof searchAndRender>): string[] {
+    const buttons = fixture.nativeElement.querySelectorAll('.results-list__item button') as NodeListOf<HTMLButtonElement>;
+    return [...buttons].map((button) => button.textContent!.trim());
+  }
+
+  it('offers Add to Wishlist for a game that is not owned or wishlisted', () => {
+    const fixture = searchAndRender(GAME);
+
+    expect(buttonLabels(fixture)).toEqual(['Add to My Games', 'Add to Wishlist']);
+  });
+
+  it('shows a disabled On Wishlist button for a game already wishlisted', () => {
+    const fixture = searchAndRender({ ...GAME, in_wishlist: true });
+
+    const onWishlist = fixture.nativeElement.querySelectorAll('.results-list__item button')[1];
+    expect(onWishlist.textContent.trim()).toBe('On Wishlist');
+    expect(onWishlist.disabled).toBe(true);
+  });
+
+  it('does not offer the wishlist for a game already owned', () => {
+    const fixture = searchAndRender({ ...GAME, in_library: true });
+
+    expect(buttonLabels(fixture)).toEqual(['Add to My Games']);
+  });
+
+  it('adds a game to the wishlist with a target price and marks it in the results', () => {
+    const fixture = searchAndRender(GAME);
+    fixture.componentInstance.startWishlisting(1);
+    fixture.componentInstance['targetPrice'].set('29.99');
+
+    fixture.componentInstance.confirmWishlist(1);
+
+    expect(wishlistCalls).toEqual([{ game_id: 1, target_price: '29.99' }]);
+    expect(fixture.componentInstance['results']()![0].in_wishlist).toBe(true);
+    expect(fixture.componentInstance['wishlistingGameId']()).toBeNull();
+  });
+
+  it('sends a null target price when none is entered', () => {
+    const fixture = searchAndRender(GAME);
+    fixture.componentInstance.startWishlisting(1);
+
+    fixture.componentInstance.confirmWishlist(1);
+
+    expect(wishlistCalls).toEqual([{ game_id: 1, target_price: null }]);
+  });
+
+  it('surfaces the backend reason when adding to the wishlist fails', () => {
+    wishlistResult = throwError(() => ({ error: { detail: 'You already own this game' } }));
+    const fixture = searchAndRender(GAME);
+    fixture.componentInstance.startWishlisting(1);
+
+    fixture.componentInstance.confirmWishlist(1);
+
+    expect(fixture.componentInstance['errorMessage']()).toBe('You already own this game');
+  });
+
+  it('closes the wishlist form when starting to add to the library instead', () => {
+    const fixture = searchAndRender(GAME);
+    fixture.componentInstance.startWishlisting(1);
+
+    fixture.componentInstance.startAdding(1);
+
+    expect(fixture.componentInstance['wishlistingGameId']()).toBeNull();
+    expect(fixture.componentInstance['addingGameId']()).toBe(1);
   });
 });
