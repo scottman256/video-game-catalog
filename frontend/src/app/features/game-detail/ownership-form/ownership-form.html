@@ -1,0 +1,38 @@
+<section class="ownership-form" aria-labelledby="ownership-form-heading">
+  <h2 id="ownership-form-heading">Your copy</h2>
+  <fieldset class="ownership-form__choices">
+    <legend>Do you own the digital or physical version?</legend>
+    <label>
+      <input
+        type="radio"
+        name="ownershipType"
+        value="digital"
+        [checked]="ownershipType() === 'digital'"
+        (change)="choose('digital')"
+      />
+      Digital
+    </label>
+    <label>
+      <input
+        type="radio"
+        name="ownershipType"
+        value="physical"
+        [checked]="ownershipType() === 'physical'"
+        (change)="choose('physical')"
+      />
+      Physical
+    </label>
+  </fieldset>
+  <app-field-error [message]="errorMessage()" />
+  <div class="ownership-form__actions">
+    <button
+      type="button"
+      class="btn btn-primary"
+      (click)="submit()"
+      [disabled]="saving() || ownershipType() === entry().ownership_type"
+    >
+      Save
+    </button>
+    <output class="ownership-form__saved" aria-live="polite">{{ savedMessage() }}</output>
+  </div>
+</section>

@@ -113,6 +113,15 @@ describe('MyGames', () => {
     expect(fixture.nativeElement.querySelector('.game-count').textContent.trim()).toBe('Showing 1 of 2 games');
   });
 
+  it('labels the top minimum rating as just 5★, since nothing rates higher', () => {
+    const fixture = TestBed.createComponent(MyGames);
+    fixture.detectChanges();
+
+    const minRatingOptions = fixture.nativeElement.querySelectorAll('select[aria-label="Min rating"] option');
+    const labels = [...minRatingOptions].map((option) => (option as HTMLOptionElement).textContent!.trim());
+    expect(labels).toEqual(['Min rating', '1★ or more', '2★ or more', '3★ or more', '4★ or more', '5★']);
+  });
+
   it('treats the "any" option of a numeric filter as no filter', () => {
     const fixture = TestBed.createComponent(MyGames);
     fixture.componentInstance.updateNumberFilter('minRating', '4');

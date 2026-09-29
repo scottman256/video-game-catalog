@@ -68,7 +68,7 @@
     >
       <option value="">Min rating</option>
       @for (stars of ratingOptions; track stars) {
-        <option [value]="stars">{{ stars }}★ or more</option>
+        <option [value]="stars">{{ stars === 5 ? '5★' : stars + '★ or more' }}</option>
       }
     </select>
     <select
