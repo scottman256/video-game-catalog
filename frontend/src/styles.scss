@@ -171,6 +171,16 @@ textarea {
   font-size: 0.9rem;
 }
 
+.link-button {
+  background: none;
+  border: none;
+  padding: 0;
+  color: var(--color-primary);
+  text-decoration: underline;
+  cursor: pointer;
+  font: inherit;
+}
+
 .empty-state {
   color: var(--color-text-muted);
 }

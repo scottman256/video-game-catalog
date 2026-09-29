@@ -12,11 +12,12 @@ import { ImageCarousel } from '../../shared/components/image-carousel/image-caro
 import { ImageModal } from '../../shared/components/image-modal/image-modal';
 import { PendingBadge } from '../../shared/components/pending-badge/pending-badge';
 import { StarScore } from '../../shared/components/star-score/star-score';
+import { OwnershipForm } from './ownership-form/ownership-form';
 import { ReviewForm } from './review-form/review-form';
 
 @Component({
   selector: 'app-game-detail',
-  imports: [ImageCarousel, ImageModal, PendingBadge, StarScore, ReviewForm],
+  imports: [ImageCarousel, ImageModal, PendingBadge, StarScore, OwnershipForm, ReviewForm],
   templateUrl: './game-detail.html',
   styleUrl: './game-detail.scss',
 })
@@ -45,6 +46,10 @@ export class GameDetail {
       next: (entry) => this.loadGameAndReview(entry, libraryId),
       error: () => this.handleLoadError(),
     });
+  }
+
+  onOwnershipSaved(entry: LibraryEntry): void {
+    this.libraryEntry.set(entry);
   }
 
   onReviewSaved(review: Review): void {

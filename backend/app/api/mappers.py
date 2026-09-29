@@ -1,11 +1,15 @@
+from collections.abc import Set as AbstractSet
+
 from sqlalchemy.orm import Session
 
 from app.models.game import Game
 from app.models.game_image import GameImage
+from app.models.user_game_library import UserGameLibrary
 from app.schemas.admin import AdminGameOut, AdminGameSummaryOut
 from app.schemas.game import GameImageOut, GameOut
+from app.schemas.library import LibraryEntryOut, LibraryGameSummary
 from app.schemas.system import SystemOut
-from app.services.review_service import ReviewService
+from app.services.review_service import ReviewService, compute_weighted_score
 from app.storage.base import StorageBackend
 
 
@@ -20,7 +24,35 @@ def to_image_out(image: GameImage, storage: StorageBackend) -> GameImageOut:
     )
 
 
-def to_game_out(game: Game, storage: StorageBackend, db: Session, owned_game_ids: set[int]) -> GameOut:
+def to_library_game_summary(game: Game, storage: StorageBackend) -> LibraryGameSummary:
+    return LibraryGameSummary(
+        id=game.id,
+        title=game.title,
+        release_year=game.release_year,
+        system=SystemOut.model_validate(game.system),
+        box_art_url=box_art_url(game, storage),
+        is_approved=game.is_approved,
+    )
+
+
+def to_library_entry_out(entry: UserGameLibrary, storage: StorageBackend) -> LibraryEntryOut:
+    return LibraryEntryOut(
+        id=entry.id,
+        game=to_library_game_summary(entry.game, storage),
+        ownership_type=entry.ownership_type,
+        price_paid=entry.price_paid,
+        added_at=entry.added_at,
+        weighted_score=compute_weighted_score(entry.review),
+    )
+
+
+def to_game_out(
+    game: Game,
+    storage: StorageBackend,
+    db: Session,
+    owned_game_ids: set[int],
+    wishlisted_game_ids: AbstractSet[int] = frozenset(),
+) -> GameOut:
     images = [to_image_out(image, storage) for image in game.images]
     return GameOut(
         id=game.id,
@@ -32,6 +64,7 @@ def to_game_out(game: Game, storage: StorageBackend, db: Session, owned_game_ids
         images=images,
         community_average_score=ReviewService(db).community_average_score(game.id),
         in_library=game.id in owned_game_ids,
+        in_wishlist=game.id in wishlisted_game_ids,
         is_approved=game.is_approved,
     )
 

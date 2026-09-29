@@ -57,6 +57,12 @@
   }
 }
 
+.results-list__actions {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
 .results-list__owned {
   display: inline-flex;
   cursor: not-allowed;

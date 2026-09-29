@@ -39,6 +39,7 @@ const GAME: Game = {
   ],
   community_average_score: 3.5,
   in_library: true,
+  in_wishlist: false,
   is_approved: true,
 };
 
@@ -111,6 +112,22 @@ describe('GameDetail', () => {
     fixture.detectChanges();
 
     expect(fixture.nativeElement.querySelector('app-pending-badge')).toBeNull();
+  });
+
+  it('shows the ownership form for the library entry', () => {
+    const fixture = TestBed.createComponent(GameDetail);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('app-ownership-form')).not.toBeNull();
+  });
+
+  it('keeps the updated library entry after the ownership type is saved', () => {
+    const fixture = TestBed.createComponent(GameDetail);
+    fixture.detectChanges();
+
+    fixture.componentInstance.onOwnershipSaved({ ...LIBRARY_ENTRY, ownership_type: 'physical' });
+
+    expect(fixture.componentInstance['libraryEntry']()?.ownership_type).toBe('physical');
   });
 
   it('stops loading and shows an error when the library entry cannot be fetched', () => {

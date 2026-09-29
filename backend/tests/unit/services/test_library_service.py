@@ -6,6 +6,7 @@ from app.repositories.game_repository import GameRepository
 from app.repositories.review_repository import ReviewRepository
 from app.repositories.system_repository import SystemRepository
 from app.repositories.user_repository import UserRepository
+from app.repositories.wishlist_repository import WishlistRepository
 from app.services.exceptions import DuplicateFieldError, GameNotFoundError
 from app.services.library_service import LibraryService
 
@@ -85,3 +86,14 @@ def test_remove_entry_also_removes_its_review(db_session):
 
     assert service.get_library_entry(entry.id) is None
     assert ReviewRepository(db_session).get_by_library_id(entry.id) is None
+
+
+def test_add_to_library_takes_the_game_off_the_wishlist(db_session):
+    system_id, user_id = _setup(db_session)
+    game_id = GameRepository(db_session).create("Mario", None, 1985, system_id, "E", user_id).id
+    wishlist = WishlistRepository(db_session)
+    wishlist.create(user_id, game_id, None)
+
+    LibraryService(db_session).add_to_library(user_id, game_id, "digital", None)
+
+    assert wishlist.get_by_user_and_game(user_id, game_id) is None

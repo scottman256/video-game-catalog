@@ -12,6 +12,11 @@ def is_game_visible_to(game: Game, user: User) -> bool:
     return game.is_approved or user.is_admin or game.created_by_user_id == user.id
 
 
+def is_game_collectible_by(game: Game | None, user_id: int) -> bool:
+    """Players may collect approved games and the pending games they submitted themselves."""
+    return game is not None and (game.is_approved or game.created_by_user_id == user_id)
+
+
 def can_manage_game_images(game: Game, user: User) -> bool:
     return user.is_admin or game.created_by_user_id == user.id
 

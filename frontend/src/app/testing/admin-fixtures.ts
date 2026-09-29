@@ -33,6 +33,7 @@ export const PENDING_GAME: AdminGame = {
   ],
   community_average_score: null,
   in_library: false,
+  in_wishlist: false,
   is_approved: false,
   submitted_by: 'scott',
   submitted_at: '2026-09-20T12:00:00Z',

@@ -9,6 +9,7 @@ from app.schemas.game import GameCreateRequest, GameOut
 from app.services.exceptions import SystemNotFoundError
 from app.services.game_service import GameService
 from app.services.library_service import LibraryService
+from app.services.wishlist_service import WishlistService
 from app.storage.base import StorageBackend
 
 router = APIRouter(prefix="/games", tags=["games"])
@@ -23,7 +24,8 @@ def search_games(
 ) -> list[GameOut]:
     games = GameService(db).search(q, current_user)
     owned_game_ids = LibraryService(db).owned_game_ids(current_user.id)
-    return [to_game_out(game, storage, db, owned_game_ids) for game in games]
+    wishlisted_game_ids = WishlistService(db).wishlisted_game_ids(current_user.id)
+    return [to_game_out(game, storage, db, owned_game_ids, wishlisted_game_ids) for game in games]
 
 
 @router.get("/{game_id}", response_model=GameOut)
@@ -37,7 +39,8 @@ def get_game(
     if not game:
         raise HTTPException(status.HTTP_404_NOT_FOUND, "Game not found")
     owned_game_ids = LibraryService(db).owned_game_ids(current_user.id)
-    return to_game_out(game, storage, db, owned_game_ids)
+    wishlisted_game_ids = WishlistService(db).wishlisted_game_ids(current_user.id)
+    return to_game_out(game, storage, db, owned_game_ids, wishlisted_game_ids)
 
 
 @router.post("", response_model=GameOut, status_code=status.HTTP_201_CREATED)
