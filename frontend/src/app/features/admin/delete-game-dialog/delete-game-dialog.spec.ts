@@ -1,5 +1,5 @@
 import { TestBed } from '@angular/core/testing';
-import { Observable, of, throwError } from 'rxjs';
+import { NEVER, Observable, of, throwError } from 'rxjs';
 
 import { AdminService } from '../../../core/services/admin';
 import { DeletableGame, DeleteGameDialog } from './delete-game-dialog';
@@ -71,6 +71,35 @@ describe('DeleteGameDialog', () => {
 
     expect(cancelled).toBe(true);
     expect(deleteCalls).toEqual([]);
+  });
+
+  it('cancels from the backdrop or the Escape key, but not from clicks inside the dialog', () => {
+    const fixture = render();
+    let cancelCount = 0;
+    fixture.componentInstance.cancelled.subscribe(() => cancelCount++);
+    const backdrop = fixture.nativeElement.querySelector('.modal-backdrop');
+
+    fixture.nativeElement.querySelector('[role="alertdialog"]').click();
+    expect(cancelCount).toBe(0);
+
+    backdrop.click();
+    backdrop.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(cancelCount).toBe(2);
+  });
+
+  it('shows progress and cannot be dismissed while the delete is in flight', () => {
+    deleteResult = NEVER;
+    const fixture = render();
+    let cancelled = false;
+    fixture.componentInstance.cancelled.subscribe(() => (cancelled = true));
+
+    button(fixture, 'Delete game').click();
+    fixture.detectChanges();
+    fixture.nativeElement.querySelector('.modal-backdrop').click();
+
+    expect(button(fixture, 'Deleting…').disabled).toBe(true);
+    expect(button(fixture, 'Cancel').disabled).toBe(true);
+    expect(cancelled).toBe(false);
   });
 
   it('keeps the dialog open with an explanation when deleting fails', () => {

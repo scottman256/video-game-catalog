@@ -1,6 +1,6 @@
 import { signal } from '@angular/core';
-import { TestBed } from '@angular/core/testing';
-import { Observable, of, throwError } from 'rxjs';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
+import { Observable, Subject, of } from 'rxjs';
 
 import { Settings } from '../../../core/models/settings.model';
 import { SettingsService } from '../../../core/services/settings';
@@ -29,6 +29,26 @@ describe('SettingsModal', () => {
     }).compileComponents();
   });
 
+  function openModal(): ComponentFixture<SettingsModal> {
+    const fixture = TestBed.createComponent(SettingsModal);
+    fixture.componentRef.setInput('open', true);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  function toggle(fixture: ComponentFixture<SettingsModal>): HTMLInputElement {
+    const checkbox = fixture.nativeElement.querySelector('#dark-mode-toggle');
+    checkbox.click();
+    fixture.detectChanges();
+    return checkbox;
+  }
+
+  function closedCount(fixture: ComponentFixture<SettingsModal>): () => number {
+    let count = 0;
+    fixture.componentInstance.closed.subscribe(() => count++);
+    return () => count;
+  }
+
   it('renders nothing when closed', () => {
     const fixture = TestBed.createComponent(SettingsModal);
     fixture.detectChanges();
@@ -37,46 +57,53 @@ describe('SettingsModal', () => {
   });
 
   it('renders the dark mode toggle when open', () => {
-    const fixture = TestBed.createComponent(SettingsModal);
-    fixture.componentRef.setInput('open', true);
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.querySelector('#dark-mode-toggle')).not.toBeNull();
+    expect(openModal().nativeElement.querySelector('#dark-mode-toggle')).not.toBeNull();
   });
 
   it('emits closed when the close button is clicked', () => {
-    const fixture = TestBed.createComponent(SettingsModal);
-    fixture.componentRef.setInput('open', true);
-    fixture.detectChanges();
-    let closed = false;
-    fixture.componentInstance.closed.subscribe(() => (closed = true));
+    const fixture = openModal();
+    const closed = closedCount(fixture);
 
     fixture.nativeElement.querySelector('.settings-modal__close').click();
 
-    expect(closed).toBe(true);
+    expect(closed()).toBe(1);
+  });
+
+  it('emits closed from the backdrop or the Escape key, but not from clicks inside the dialog', () => {
+    const fixture = openModal();
+    const closed = closedCount(fixture);
+    const backdrop = fixture.nativeElement.querySelector('.modal-backdrop');
+
+    fixture.nativeElement.querySelector('.settings-modal').click();
+    expect(closed()).toBe(0);
+
+    backdrop.click();
+    backdrop.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(closed()).toBe(2);
   });
 
   it('optimistically flips dark mode and persists it', () => {
-    const fixture = TestBed.createComponent(SettingsModal);
-    fixture.componentRef.setInput('open', true);
-    fixture.detectChanges();
+    const fixture = openModal();
 
-    fixture.componentInstance.toggleDarkMode();
+    const checkbox = toggle(fixture);
 
     expect(updateCalls).toEqual([true]);
     expect(darkModeSignal()).toBe(true);
-    expect(fixture.componentInstance['saving']()).toBe(false);
+    expect(checkbox.disabled).toBe(false);
   });
 
-  it('rolls back on failure so the toggle reflects the real saved state', () => {
-    updateResult = throwError(() => new Error('failed'));
-    const fixture = TestBed.createComponent(SettingsModal);
-    fixture.componentRef.setInput('open', true);
+  it('disables the toggle while saving, then rolls back on failure so it reflects the real saved state', () => {
+    const response = new Subject<Settings>();
+    updateResult = response;
+    const fixture = openModal();
+    const checkbox = toggle(fixture);
+    expect(checkbox.disabled).toBe(true);
+
+    response.error(new Error('failed'));
     fixture.detectChanges();
 
-    fixture.componentInstance.toggleDarkMode();
-
     expect(darkModeSignal()).toBe(false);
-    expect(fixture.componentInstance['saving']()).toBe(false);
+    expect(checkbox.checked).toBe(false);
+    expect(checkbox.disabled).toBe(false);
   });
 });

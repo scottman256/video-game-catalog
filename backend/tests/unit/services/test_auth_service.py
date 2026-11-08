@@ -1,5 +1,7 @@
 import pytest
 
+from app.core.security import hash_refresh_token
+from app.repositories.refresh_token_repository import RefreshTokenRepository
 from app.services.auth_service import AuthService
 from app.services.exceptions import DuplicateFieldError, InvalidCredentialsError
 
@@ -86,3 +88,17 @@ def test_logout_revokes_the_refresh_token(db_session):
 
     with pytest.raises(InvalidCredentialsError):
         service.refresh(refresh_token)
+
+
+def test_logout_ignores_unknown_and_already_revoked_tokens(db_session):
+    service = AuthService(db_session)
+    user = service.register("scott", "scott@example.com", "Sup3r$ecret")
+    _, refresh_token = service.issue_tokens(user.id)
+    service.logout(refresh_token)
+    record = RefreshTokenRepository(db_session).get_by_token_hash(hash_refresh_token(refresh_token))
+    first_revoked_at = record.revoked_at
+
+    service.logout(refresh_token)
+    service.logout("never-issued-token")
+
+    assert record.revoked_at == first_revoked_at

@@ -1,9 +1,10 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Observable, of, throwError } from 'rxjs';
 
 import { LibraryEntry } from '../../../core/models/library-entry.model';
 import { LibraryService } from '../../../core/services/library';
 import { todayAsIsoDate } from '../../../shared/utils/local-date';
+import { buttonWithText, enterValue } from '../../../testing/dom';
 import { PlayProgressForm } from './play-progress-form';
 
 const ENTRY: LibraryEntry = {
@@ -39,7 +40,10 @@ describe('PlayProgressForm', () => {
     saveCalls = [];
     saveResult = of(PROGRESSED);
     const libraryStub = {
-      updatePlayProgress: (id: number, payload: unknown) => (saveCalls.push([id, payload]), saveResult),
+      updatePlayProgress: (id: number, payload: unknown) => (
+        saveCalls.push([id, payload]),
+        saveResult
+      ),
     };
 
     await TestBed.configureTestingModule({
@@ -48,15 +52,56 @@ describe('PlayProgressForm', () => {
     }).compileComponents();
   });
 
-  function render(entry: LibraryEntry = ENTRY) {
+  function render(entry: LibraryEntry = ENTRY): ComponentFixture<PlayProgressForm> {
     const fixture = TestBed.createComponent(PlayProgressForm);
     fixture.componentRef.setInput('entry', entry);
     fixture.detectChanges();
     return fixture;
   }
 
-  function signalValue<T>(fixture: ReturnType<typeof render>, name: string): T {
-    return (fixture.componentInstance as unknown as Record<string, () => T>)[name]();
+  function checkbox(
+    fixture: ComponentFixture<PlayProgressForm>,
+    label: 'Completed' | '100% completed',
+  ): HTMLInputElement {
+    const labels = [
+      ...fixture.nativeElement.querySelectorAll('.play-progress-form__check'),
+    ] as HTMLLabelElement[];
+    return labels
+      .find((candidate) => candidate.textContent!.trim() === label)!
+      .querySelector('input')!;
+  }
+
+  function toggle(
+    fixture: ComponentFixture<PlayProgressForm>,
+    label: 'Completed' | '100% completed',
+  ): void {
+    checkbox(fixture, label).click();
+    fixture.detectChanges();
+  }
+
+  function dateInput(
+    fixture: ComponentFixture<PlayProgressForm>,
+    ariaLabel: string,
+  ): HTMLInputElement {
+    return fixture.nativeElement.querySelector(`input[aria-label="${ariaLabel}"]`);
+  }
+
+  function setDate(
+    fixture: ComponentFixture<PlayProgressForm>,
+    ariaLabel: string,
+    value: string,
+  ): void {
+    enterValue(dateInput(fixture, ariaLabel), value);
+    fixture.detectChanges();
+  }
+
+  function saveButton(fixture: ComponentFixture<PlayProgressForm>): HTMLButtonElement {
+    return buttonWithText(fixture.nativeElement, 'Save progress');
+  }
+
+  function save(fixture: ComponentFixture<PlayProgressForm>): void {
+    saveButton(fixture).click();
+    fixture.detectChanges();
   }
 
   it('starts unticked with no date pickers for a game without progress', () => {
@@ -69,104 +114,128 @@ describe('PlayProgressForm', () => {
   it('loads saved progress from the library entry', () => {
     const fixture = render(PROGRESSED);
 
-    const dates = [...fixture.nativeElement.querySelectorAll('input[type="date"]')] as HTMLInputElement[];
-    expect(dates.map((input) => input.value)).toEqual(['2026-09-01', '2026-09-20']);
+    expect(dateInput(fixture, 'Completed on').value).toBe('2026-09-01');
+    expect(dateInput(fixture, '100% completed on').value).toBe('2026-09-20');
     expect(fixture.nativeElement.querySelector('#hours-played').value).toBe('42.5');
   });
 
   it('defaults the completed date to today when ticking Completed', () => {
     const fixture = render();
 
-    fixture.componentInstance.setCompleted(true);
-    fixture.detectChanges();
+    toggle(fixture, 'Completed');
 
-    expect(signalValue(fixture, 'completedOn')).toBe(todayAsIsoDate());
-    expect(fixture.nativeElement.querySelector('input[aria-label="Completed on"]').max).toBe(todayAsIsoDate());
+    expect(dateInput(fixture, 'Completed on').value).toBe(todayAsIsoDate());
+    expect(dateInput(fixture, 'Completed on').max).toBe(todayAsIsoDate());
   });
 
   it('ticks Completed too when ticking 100%, both dated today', () => {
     const fixture = render();
 
-    fixture.componentInstance.setFullyCompleted(true);
+    toggle(fixture, '100% completed');
 
-    expect(signalValue(fixture, 'completedOn')).toBe(todayAsIsoDate());
-    expect(signalValue(fixture, 'fullyCompletedOn')).toBe(todayAsIsoDate());
+    expect(checkbox(fixture, 'Completed').checked).toBe(true);
+    expect(dateInput(fixture, 'Completed on').value).toBe(todayAsIsoDate());
+    expect(dateInput(fixture, '100% completed on').value).toBe(todayAsIsoDate());
   });
 
   it('keeps an existing completed date when ticking 100%', () => {
     const fixture = render({ ...ENTRY, completed_on: '2026-09-01' });
 
-    fixture.componentInstance.setFullyCompleted(true);
+    toggle(fixture, '100% completed');
 
-    expect(signalValue(fixture, 'completedOn')).toBe('2026-09-01');
+    expect(dateInput(fixture, 'Completed on').value).toBe('2026-09-01');
+  });
+
+  it('keeps Completed when unticking 100%', () => {
+    const fixture = render(PROGRESSED);
+
+    toggle(fixture, '100% completed');
+
+    expect(dateInput(fixture, '100% completed on')).toBeNull();
+    expect(dateInput(fixture, 'Completed on').value).toBe('2026-09-01');
   });
 
   it('clears 100% when unticking Completed', () => {
     const fixture = render(PROGRESSED);
 
-    fixture.componentInstance.setCompleted(false);
+    toggle(fixture, 'Completed');
 
-    expect(signalValue(fixture, 'completedOn')).toBe('');
-    expect(signalValue(fixture, 'fullyCompletedOn')).toBe('');
+    expect(checkbox(fixture, '100% completed').checked).toBe(false);
+    expect(fixture.nativeElement.querySelector('input[type="date"]')).toBeNull();
   });
 
-  it('blocks saving when the 100% date is before the completed date', () => {
-    const fixture = render({ ...PROGRESSED, fully_completed_on: '2026-08-01' });
+  it('blocks saving when the 100% date is moved before the completed date', () => {
+    const fixture = render(PROGRESSED);
 
-    expect(signalValue(fixture, 'validationError')).toBe("The 100% date can't be before the completed date.");
-    expect(fixture.nativeElement.querySelector('.play-progress-form__actions button').disabled).toBe(true);
+    setDate(fixture, '100% completed on', '2026-08-01');
+
+    expect(fixture.nativeElement.textContent).toContain(
+      "The 100% date can't be before the completed date.",
+    );
+    expect(saveButton(fixture).disabled).toBe(true);
   });
 
   it('blocks saving when 100% is set but the completed date was cleared', () => {
     const fixture = render(PROGRESSED);
 
-    (fixture.componentInstance as unknown as { completedOn: { set(value: string): void } }).completedOn.set('');
+    setDate(fixture, 'Completed on', '');
 
-    expect(signalValue(fixture, 'validationError')).toBe(
+    expect(fixture.nativeElement.textContent).toContain(
       'A game must be completed before it can be 100% completed.',
     );
+    expect(saveButton(fixture).disabled).toBe(true);
   });
 
   it('saves progress, sending blanks as null, and emits the updated entry', () => {
     const fixture = render();
     const emitted: LibraryEntry[] = [];
     fixture.componentInstance.saved.subscribe((entry) => emitted.push(entry));
-    fixture.componentInstance.setCompleted(true);
+    toggle(fixture, 'Completed');
 
-    fixture.componentInstance.submit();
+    save(fixture);
 
     expect(saveCalls).toEqual([
       [5, { completed_on: todayAsIsoDate(), fully_completed_on: null, hours_played: null }],
     ]);
     expect(emitted).toEqual([PROGRESSED]);
-    expect(signalValue(fixture, 'savedMessage')).toBe('Progress saved.');
+    expect(fixture.nativeElement.querySelector('output').textContent).toBe('Progress saved.');
   });
 
   it('sends hours played as entered', () => {
     const fixture = render();
-    (fixture.componentInstance as unknown as { hoursPlayed: { set(value: string): void } }).hoursPlayed.set('12.5');
+    enterValue(fixture.nativeElement.querySelector('#hours-played'), '12.5');
 
-    fixture.componentInstance.submit();
+    save(fixture);
 
-    expect(saveCalls).toEqual([[5, { completed_on: null, fully_completed_on: null, hours_played: '12.5' }]]);
+    expect(saveCalls).toEqual([
+      [5, { completed_on: null, fully_completed_on: null, hours_played: '12.5' }],
+    ]);
   });
 
-  it('shows the server message when it explains the problem', () => {
-    saveResult = throwError(() => ({ error: { detail: 'A game must be completed before it can be 100% completed' } }));
+  it('shows the server message when it explains the problem, and re-enables saving', () => {
+    saveResult = throwError(() => ({
+      error: { detail: 'A game must be completed before it can be 100% completed' },
+    }));
     const fixture = render();
 
-    fixture.componentInstance.submit();
+    save(fixture);
 
-    expect(signalValue(fixture, 'errorMessage')).toBe('A game must be completed before it can be 100% completed');
-    expect(signalValue(fixture, 'saving')).toBe(false);
+    expect(fixture.nativeElement.textContent).toContain(
+      'A game must be completed before it can be 100% completed',
+    );
+    expect(saveButton(fixture).disabled).toBe(false);
   });
 
   it('shows a generic message for field validation errors', () => {
-    saveResult = throwError(() => ({ error: { detail: [{ loc: ['body', 'hours_played'], msg: 'bad' }] } }));
+    saveResult = throwError(() => ({
+      error: { detail: [{ loc: ['body', 'hours_played'], msg: 'bad' }] },
+    }));
     const fixture = render();
 
-    fixture.componentInstance.submit();
+    save(fixture);
 
-    expect(signalValue(fixture, 'errorMessage')).toBe('Could not save your progress. Please check the values.');
+    expect(fixture.nativeElement.textContent).toContain(
+      'Could not save your progress. Please check the values.',
+    );
   });
 });

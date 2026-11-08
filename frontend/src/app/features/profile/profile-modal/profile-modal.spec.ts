@@ -1,9 +1,12 @@
 import { signal } from '@angular/core';
 import { ComponentFixture, TestBed } from '@angular/core/testing';
-import { Observable, of, throwError } from 'rxjs';
+import { By } from '@angular/platform-browser';
+import { NEVER, Observable, of, throwError } from 'rxjs';
 
 import { Profile } from '../../../core/models/profile.model';
 import { ProfileService } from '../../../core/services/profile';
+import { selectFiles } from '../../../testing/dom';
+import { ProfilePictureCropper } from '../profile-picture-cropper/profile-picture-cropper';
 import { ProfileModal } from './profile-modal';
 
 const PROFILE: Profile = {
@@ -15,11 +18,6 @@ const PROFILE: Profile = {
   systems_owned: 2,
   average_review_score: 4.5,
 };
-
-function selectFile(fixture: ComponentFixture<ProfileModal>, file: File | null): void {
-  const input = { files: file ? [file] : [], value: 'C:\\fakepath\\avatar.png' };
-  fixture.componentInstance.onPictureSelected({ target: input } as unknown as Event);
-}
 
 describe('ProfileModal', () => {
   let profileSignal: ReturnType<typeof signal<Profile | null>>;
@@ -50,6 +48,35 @@ describe('ProfileModal', () => {
     return fixture;
   }
 
+  function closedCount(fixture: ComponentFixture<ProfileModal>): () => number {
+    let count = 0;
+    fixture.componentInstance.closed.subscribe(() => count++);
+    return () => count;
+  }
+
+  function pickPicture(fixture: ComponentFixture<ProfileModal>, files: File[]): void {
+    selectFiles(fixture.nativeElement.querySelector('#profile-picture-input'), files);
+    fixture.detectChanges();
+  }
+
+  function cropper(fixture: ComponentFixture<ProfileModal>): ProfilePictureCropper {
+    return fixture.debugElement.query(By.directive(ProfilePictureCropper)).componentInstance;
+  }
+
+  function emitFromCropper(
+    fixture: ComponentFixture<ProfileModal>,
+    eventName: string,
+    value?: unknown,
+  ): void {
+    fixture.debugElement
+      .query(By.css('app-profile-picture-cropper'))
+      .triggerEventHandler(eventName, value);
+    fixture.detectChanges();
+  }
+
+  const AVATAR = new File(['data'], 'avatar.png', { type: 'image/png' });
+  const CROPPED = new Blob(['cropped'], { type: 'image/png' });
+
   it('renders nothing when closed', () => {
     const fixture = TestBed.createComponent(ProfileModal);
     fixture.detectChanges();
@@ -58,39 +85,53 @@ describe('ProfileModal', () => {
   });
 
   it('shows the profile stats when open', () => {
-    const fixture = openModal();
+    const text = openModal().nativeElement.textContent;
 
-    const text = fixture.nativeElement.textContent;
     expect(text).toContain('scott');
     expect(text).toContain('3');
     expect(text).toContain('4.5');
   });
 
+  it('shows a loading message until the profile arrives', () => {
+    profileSignal.set(null);
+
+    expect(openModal().nativeElement.textContent).toContain('Loading…');
+  });
+
   it('shows a friendly message when no games are rated', () => {
     profileSignal.set({ ...PROFILE, average_review_score: null });
-    const fixture = openModal();
 
-    expect(fixture.nativeElement.textContent).toContain('No games rated yet');
+    expect(openModal().nativeElement.textContent).toContain('No games rated yet');
   });
 
   it('emits closed when the close button is clicked', () => {
     const fixture = openModal();
-    let closed = false;
-    fixture.componentInstance.closed.subscribe(() => (closed = true));
+    const closed = closedCount(fixture);
 
     fixture.nativeElement.querySelector('.profile-modal__close').click();
 
-    expect(closed).toBe(true);
+    expect(closed()).toBe(1);
+  });
+
+  it('emits closed from the backdrop or the Escape key, but not from clicks inside the dialog', () => {
+    const fixture = openModal();
+    const closed = closedCount(fixture);
+    const backdrop = fixture.nativeElement.querySelector('.modal-backdrop');
+
+    fixture.nativeElement.querySelector('.profile-modal').click();
+    expect(closed()).toBe(0);
+
+    backdrop.click();
+    backdrop.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+    expect(closed()).toBe(2);
   });
 
   it('opens the cropper instead of uploading straight away', () => {
     const fixture = openModal();
-    const file = new File(['data'], 'avatar.png', { type: 'image/png' });
 
-    selectFile(fixture, file);
-    fixture.detectChanges();
+    pickPicture(fixture, [AVATAR]);
 
-    expect(fixture.componentInstance['pendingFile']()).toBe(file);
+    expect(cropper(fixture).file()).toBe(AVATAR);
     expect(uploadCalls.length).toBe(0);
     expect(fixture.nativeElement.querySelector('.cropper')).not.toBeNull();
   });
@@ -98,32 +139,53 @@ describe('ProfileModal', () => {
   it('ignores an empty file selection', () => {
     const fixture = openModal();
 
-    selectFile(fixture, null);
+    pickPicture(fixture, []);
 
-    expect(fixture.componentInstance['pendingFile']()).toBeNull();
+    expect(cropper(fixture).file()).toBeNull();
+  });
+
+  it('clears the file input so the same picture can be picked again', () => {
+    const fixture = openModal();
+    const input = { files: [AVATAR], value: 'C:\\fakepath\\avatar.png' };
+
+    fixture.componentInstance.onPictureSelected({ target: input } as unknown as Event);
+
+    expect(input.value).toBe('');
   });
 
   it('uploads the cropped image once the crop is confirmed', () => {
     const fixture = openModal();
-    selectFile(fixture, new File(['data'], 'avatar.png', { type: 'image/png' }));
+    pickPicture(fixture, [AVATAR]);
 
-    fixture.componentInstance.onCropped(new Blob(['cropped'], { type: 'image/png' }));
+    emitFromCropper(fixture, 'cropped', CROPPED);
 
     expect(uploadCalls.length).toBe(1);
     expect(uploadCalls[0].type).toBe('image/png');
-    expect(fixture.componentInstance['pendingFile']()).toBeNull();
-    expect(fixture.componentInstance['uploading']()).toBe(false);
+    expect(cropper(fixture).file()).toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('label[for="profile-picture-input"]').textContent.trim(),
+    ).toBe('Upload picture');
+  });
+
+  it('shows upload progress and blocks picking another picture meanwhile', () => {
+    uploadResult = NEVER;
+    const fixture = openModal();
+
+    emitFromCropper(fixture, 'cropped', CROPPED);
+
+    expect(
+      fixture.nativeElement.querySelector('label[for="profile-picture-input"]').textContent.trim(),
+    ).toBe('Uploading…');
+    expect(fixture.nativeElement.querySelector('#profile-picture-input').disabled).toBe(true);
   });
 
   it('uploads nothing when the crop is cancelled', () => {
     const fixture = openModal();
-    selectFile(fixture, new File(['data'], 'avatar.png', { type: 'image/png' }));
+    pickPicture(fixture, [AVATAR]);
 
-    fixture.componentInstance.onCropCancelled();
-    fixture.detectChanges();
+    emitFromCropper(fixture, 'cancelled');
 
     expect(uploadCalls.length).toBe(0);
-    expect(fixture.componentInstance['pendingFile']()).toBeNull();
     expect(fixture.nativeElement.querySelector('.cropper')).toBeNull();
   });
 
@@ -131,18 +193,20 @@ describe('ProfileModal', () => {
     uploadResult = throwError(() => ({ error: { detail: 'Image exceeds the 5 MB size limit' } }));
     const fixture = openModal();
 
-    fixture.componentInstance.onCropped(new Blob(['cropped'], { type: 'image/png' }));
+    emitFromCropper(fixture, 'cropped', CROPPED);
 
-    expect(fixture.componentInstance['uploading']()).toBe(false);
-    expect(fixture.componentInstance['errorMessage']()).toBe('Image exceeds the 5 MB size limit');
+    expect(fixture.nativeElement.textContent).toContain('Image exceeds the 5 MB size limit');
+    expect(fixture.nativeElement.querySelector('#profile-picture-input').disabled).toBe(false);
   });
 
-  it('clears the file input so the same picture can be picked again', () => {
+  it('falls back to a generic message when the upload fails without a reason', () => {
+    uploadResult = throwError(() => new Error('failed'));
     const fixture = openModal();
-    const input = { files: [new File(['data'], 'avatar.png')], value: 'C:\\fakepath\\avatar.png' };
 
-    fixture.componentInstance.onPictureSelected({ target: input } as unknown as Event);
+    emitFromCropper(fixture, 'cropped', CROPPED);
 
-    expect(input.value).toBe('');
+    expect(fixture.nativeElement.textContent).toContain(
+      'Could not upload that picture. Please try again.',
+    );
   });
 });

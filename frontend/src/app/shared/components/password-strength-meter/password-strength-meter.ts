@@ -14,7 +14,8 @@ export class PasswordStrengthMeter {
   readonly password = input('');
   protected readonly levels = [0, 1, 2, 3, 4];
 
-  protected readonly score = computed(() => (this.password() ? zxcvbn(this.password()).score : -1));
-  protected readonly label = computed(() => (this.score() >= 0 ? LABELS[this.score()] : ''));
-  protected readonly color = computed(() => COLORS[this.score()] ?? 'transparent');
+  /** Only read while the template shows the meter, which it does only for a non-empty password. */
+  protected readonly score = computed(() => zxcvbn(this.password()).score);
+  protected readonly label = computed(() => LABELS[this.score()]);
+  protected readonly color = computed(() => COLORS[this.score()]);
 }

@@ -134,33 +134,38 @@ describe('App', () => {
     expect(TestBed.inject(ProfileService).profile()).toBeNull();
   });
 
-  it('opens the settings modal from the user menu', () => {
-    const fixture = TestBed.createComponent(App);
-    TestBed.inject(Auth).currentUser.set(USER);
-    fixture.detectChanges();
-    loginAndFlushSessionRequests();
-    fixture.detectChanges();
-
+  function chooseMenuItem(fixture: ReturnType<typeof renderSignedInAs>, label: string): void {
     fixture.nativeElement.querySelector('.user-menu__trigger').click();
     fixture.detectChanges();
-    fixture.componentInstance['openSettings']();
+    [...fixture.nativeElement.querySelectorAll('.user-menu__item')]
+      .find((item: HTMLElement) => item.textContent!.trim() === label)
+      .click();
     fixture.detectChanges();
+  }
 
+  it('opens the settings modal from the user menu and closes it again', () => {
+    const fixture = renderSignedInAs(USER);
+
+    chooseMenuItem(fixture, 'Settings');
     expect(fixture.nativeElement.querySelector('.settings-modal')).not.toBeNull();
+    expect(fixture.nativeElement.querySelector('.user-menu__dropdown')).toBeNull();
+
+    fixture.nativeElement.querySelector('.settings-modal__close').click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.settings-modal')).toBeNull();
   });
 
-  it('opens the profile modal from the user menu', () => {
-    const fixture = TestBed.createComponent(App);
-    TestBed.inject(Auth).currentUser.set(USER);
-    fixture.detectChanges();
-    loginAndFlushSessionRequests();
-    fixture.detectChanges();
+  it('opens the profile modal from the user menu and closes it again', () => {
+    const fixture = renderSignedInAs(USER);
 
-    fixture.componentInstance['openProfile']();
+    chooseMenuItem(fixture, 'View profile');
     httpMock.expectOne(`${environment.apiBaseUrl}/me/profile`).flush(PROFILE);
     fixture.detectChanges();
-
     expect(fixture.nativeElement.querySelector('.profile-modal')).not.toBeNull();
+
+    fixture.nativeElement.querySelector('.profile-modal__close').click();
+    fixture.detectChanges();
+    expect(fixture.nativeElement.querySelector('.profile-modal')).toBeNull();
   });
 
   it('shows the user menu dropdown only after clicking the trigger', () => {

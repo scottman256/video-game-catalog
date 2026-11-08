@@ -1,8 +1,9 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { Observable, of, throwError } from 'rxjs';
 
 import { LibraryEntry } from '../../../core/models/library-entry.model';
 import { LibraryService } from '../../../core/services/library';
+import { buttonWithText } from '../../../testing/dom';
 import { OwnershipForm } from './ownership-form';
 
 const ENTRY: LibraryEntry = {
@@ -33,7 +34,8 @@ describe('OwnershipForm', () => {
     updateResult = of({ ...ENTRY, ownership_type: 'physical' });
     const libraryStub = {
       update: (id: number, ownershipType: string, pricePaid: string | null) => (
-        updateCalls.push([id, ownershipType, pricePaid]), updateResult
+        updateCalls.push([id, ownershipType, pricePaid]),
+        updateResult
       ),
     };
 
@@ -43,15 +45,29 @@ describe('OwnershipForm', () => {
     }).compileComponents();
   });
 
-  function render() {
+  function render(): ComponentFixture<OwnershipForm> {
     const fixture = TestBed.createComponent(OwnershipForm);
     fixture.componentRef.setInput('entry', ENTRY);
     fixture.detectChanges();
     return fixture;
   }
 
-  function radio(fixture: ReturnType<typeof render>, value: string): HTMLInputElement {
+  function radio(fixture: ComponentFixture<OwnershipForm>, value: string): HTMLInputElement {
     return fixture.nativeElement.querySelector(`input[value="${value}"]`);
+  }
+
+  function choose(fixture: ComponentFixture<OwnershipForm>, value: string): void {
+    radio(fixture, value).click();
+    fixture.detectChanges();
+  }
+
+  function saveButton(fixture: ComponentFixture<OwnershipForm>): HTMLButtonElement {
+    return buttonWithText(fixture.nativeElement, 'Save');
+  }
+
+  function save(fixture: ComponentFixture<OwnershipForm>): void {
+    saveButton(fixture).click();
+    fixture.detectChanges();
   }
 
   it('starts with the current ownership type selected', () => {
@@ -61,38 +77,40 @@ describe('OwnershipForm', () => {
     expect(radio(fixture, 'physical').checked).toBe(false);
   });
 
-  it('disables Save until the ownership type changes', () => {
+  it('enables Save only while the choice differs from the saved ownership type', () => {
     const fixture = render();
-    const saveButton = fixture.nativeElement.querySelector('.ownership-form button');
-    expect(saveButton.disabled).toBe(true);
+    expect(saveButton(fixture).disabled).toBe(true);
 
-    fixture.componentInstance.choose('physical');
-    fixture.detectChanges();
+    choose(fixture, 'physical');
+    expect(saveButton(fixture).disabled).toBe(false);
 
-    expect(saveButton.disabled).toBe(false);
+    choose(fixture, 'digital');
+    expect(saveButton(fixture).disabled).toBe(true);
   });
 
   it('saves the new ownership type, keeps the price, and emits the updated entry', () => {
     const fixture = render();
     const emitted: LibraryEntry[] = [];
     fixture.componentInstance.saved.subscribe((entry) => emitted.push(entry));
-    fixture.componentInstance.choose('physical');
+    choose(fixture, 'physical');
 
-    fixture.componentInstance.submit();
+    save(fixture);
 
     expect(updateCalls).toEqual([[5, 'physical', '19.99']]);
     expect(emitted[0].ownership_type).toBe('physical');
-    expect(fixture.componentInstance['savedMessage']()).toBe('Saved as physical.');
+    expect(fixture.nativeElement.querySelector('output').textContent).toBe('Saved as physical.');
   });
 
-  it('shows an error when saving fails', () => {
+  it('shows an error and re-enables Save when saving fails', () => {
     updateResult = throwError(() => new Error('failed'));
     const fixture = render();
-    fixture.componentInstance.choose('physical');
+    choose(fixture, 'physical');
 
-    fixture.componentInstance.submit();
+    save(fixture);
 
-    expect(fixture.componentInstance['saving']()).toBe(false);
-    expect(fixture.componentInstance['errorMessage']()).toBe('Could not update your copy. Please try again.');
+    expect(fixture.nativeElement.textContent).toContain(
+      'Could not update your copy. Please try again.',
+    );
+    expect(saveButton(fixture).disabled).toBe(false);
   });
 });

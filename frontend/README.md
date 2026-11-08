@@ -27,7 +27,17 @@ Serves the app at `http://localhost:4200` with live reload. The backend must alr
 npm test
 ```
 
-Runs the unit test suite (Vitest, via Angular's `@angular/build:unit-test` builder) once. There are 60+ specs covering services, guards, the auth interceptor, and every component.
+Runs the unit test suite (Vitest, via Angular's `@angular/build:unit-test` builder) once. It has specs for services, guards, the auth interceptor, and every component.
+
+Component specs interact with the rendered page the way a user would, clicking buttons and filling in fields, rather than calling component methods directly. That way they also check that the template is wired to the right methods. The shared helpers for this live in `src/app/testing/dom.ts`.
+
+To also measure coverage:
+
+```bash
+npm run test:coverage
+```
+
+This prints a summary and writes an HTML report to `coverage/frontend/index.html`. The run fails if statements, branches, functions, or lines drop below 90% (`coverageThresholds` in `angular.json`).
 
 ## Building for production
 

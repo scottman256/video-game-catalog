@@ -119,3 +119,15 @@ def test_update_play_progress_sets_and_clears_every_field(db_session):
     repo.update_play_progress(entry, None, None, None)
     cleared = repo.get_by_id(entry.id)
     assert (cleared.completed_on, cleared.fully_completed_on, cleared.hours_played) == (None, None, None)
+
+
+def test_update_changes_only_the_fields_provided(db_session):
+    user_id, game_id = _make_user_and_game(db_session)
+    repo = LibraryRepository(db_session)
+    entry = repo.create(user_id, game_id, "digital", Decimal("19.99"))
+
+    repo.update(entry, "physical", None)
+    assert (entry.ownership_type, entry.price_paid) == ("physical", Decimal("19.99"))
+
+    repo.update(entry, None, Decimal("5.00"))
+    assert (entry.ownership_type, entry.price_paid) == ("physical", Decimal("5.00"))

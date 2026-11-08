@@ -1,9 +1,10 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
+import { NEVER, Observable, of, throwError } from 'rxjs';
 
 import { LibraryEntry } from '../../core/models/library-entry.model';
 import { LibraryService } from '../../core/services/library';
+import { buttonWithText, enterValue } from '../../testing/dom';
 import { MyGames } from './my-games';
 
 const ENTRY: LibraryEntry = {
@@ -25,9 +26,26 @@ const ENTRY: LibraryEntry = {
   hours_played: null,
 };
 
+const ZELDA: LibraryEntry = {
+  ...ENTRY,
+  id: 2,
+  game: {
+    ...ENTRY.game,
+    id: 11,
+    title: 'Zelda',
+    system: { id: 2, name: 'SNES', release_year: 1991 },
+  },
+  ownership_type: 'physical',
+  weighted_score: 2,
+};
+
 function countLineParts(element: HTMLElement): string[] {
   const parts = [...element.querySelectorAll('.game-count > span')] as HTMLElement[];
   return parts.map((part) => part.textContent!.trim());
+}
+
+function cardTitles(element: HTMLElement): string[] {
+  return [...element.querySelectorAll('.game-card h3')].map((title) => title.textContent!.trim());
 }
 
 describe('MyGames', () => {
@@ -47,24 +65,60 @@ describe('MyGames', () => {
     }).compileComponents();
   });
 
+  function render(...entries: LibraryEntry[]): ComponentFixture<MyGames> {
+    if (entries.length) listResult = of(entries);
+    const fixture = TestBed.createComponent(MyGames);
+    fixture.detectChanges();
+    return fixture;
+  }
+
+  function choose(fixture: ComponentFixture<MyGames>, selector: string, value: string): void {
+    enterValue(fixture.nativeElement.querySelector(selector), value);
+    fixture.detectChanges();
+  }
+
+  function click(fixture: ComponentFixture<MyGames>, label: string, root?: HTMLElement): void {
+    buttonWithText(root ?? fixture.nativeElement, label).click();
+    fixture.detectChanges();
+  }
+
   it('loads the library sorted by title ascending by default', () => {
-    TestBed.createComponent(MyGames);
+    render();
 
     expect(listCalls).toEqual([['title', 'asc']]);
   });
 
   it('renders the loaded entries', () => {
-    const fixture = TestBed.createComponent(MyGames);
-    fixture.detectChanges();
+    const fixture = render();
 
-    expect(fixture.nativeElement.textContent).toContain('Mario');
+    expect(cardTitles(fixture.nativeElement)).toEqual(['Mario']);
+    expect(fixture.nativeElement.querySelector('.game-card__art-placeholder')).not.toBeNull();
+  });
+
+  it('shows box art when a game has it', () => {
+    const fixture = render({ ...ENTRY, game: { ...ENTRY.game, box_art_url: '/cover.png' } });
+
+    expect(fixture.nativeElement.querySelector('.game-card img').getAttribute('src')).toBe(
+      '/cover.png',
+    );
+  });
+
+  it('shows a loading message until the library arrives', () => {
+    listResult = NEVER;
+
+    expect(render().nativeElement.textContent).toContain('Loading…');
+  });
+
+  it('invites searching for games when the catalog is empty', () => {
+    listResult = of([]);
+
+    expect(render().nativeElement.textContent).toContain('Your catalog is empty.');
   });
 
   it('reloads with the new sort field when changed', () => {
-    const fixture = TestBed.createComponent(MyGames);
-    fixture.detectChanges();
+    const fixture = render();
 
-    fixture.componentInstance.changeSort('rating');
+    choose(fixture, '#sort', 'rating');
 
     expect(listCalls).toEqual([
       ['title', 'asc'],
@@ -72,22 +126,25 @@ describe('MyGames', () => {
     ]);
   });
 
-  it('toggles sort direction', () => {
-    const fixture = TestBed.createComponent(MyGames);
-    fixture.detectChanges();
+  it('toggles the sort direction back and forth', () => {
+    const fixture = render();
 
-    fixture.componentInstance.toggleDirection();
+    click(fixture, '↑ Ascending');
+    click(fixture, '↓ Descending');
 
     expect(listCalls).toEqual([
       ['title', 'asc'],
       ['title', 'desc'],
+      ['title', 'asc'],
     ]);
   });
 
   it('marks pending games with the pending approval pill', () => {
-    listResult = of([ENTRY, { ...ENTRY, id: 2, game: { ...ENTRY.game, id: 11, is_approved: false } }]);
-    const fixture = TestBed.createComponent(MyGames);
-    fixture.detectChanges();
+    const fixture = render(ENTRY, {
+      ...ENTRY,
+      id: 2,
+      game: { ...ENTRY.game, id: 11, is_approved: false },
+    });
 
     const cards = fixture.nativeElement.querySelectorAll('.game-card');
     expect(cards[0].querySelector('app-pending-badge')).toBeNull();
@@ -95,13 +152,11 @@ describe('MyGames', () => {
   });
 
   it('shows completion badges and hours played on each owned game', () => {
-    listResult = of([
+    const fixture = render(
       { ...ENTRY, completed_on: '2026-09-01', hours_played: '10.0' },
       { ...ENTRY, id: 2, completed_on: '2026-09-01', fully_completed_on: '2026-09-20' },
       { ...ENTRY, id: 3 },
-    ]);
-    const fixture = TestBed.createComponent(MyGames);
-    fixture.detectChanges();
+    );
 
     const cards = [...fixture.nativeElement.querySelectorAll('.game-card')] as HTMLElement[];
     expect(cards[0].querySelector('.status-badge')!.textContent).toContain('Completed');
@@ -111,13 +166,17 @@ describe('MyGames', () => {
   });
 
   it('shows total hours, completed and 100% counts after the game count', () => {
-    listResult = of([
+    const fixture = render(
       { ...ENTRY, completed_on: '2026-09-01', hours_played: '10.5' },
-      { ...ENTRY, id: 2, completed_on: '2026-09-01', fully_completed_on: '2026-09-20', hours_played: '30.0' },
+      {
+        ...ENTRY,
+        id: 2,
+        completed_on: '2026-09-01',
+        fully_completed_on: '2026-09-20',
+        hours_played: '30.0',
+      },
       { ...ENTRY, id: 3 },
-    ]);
-    const fixture = TestBed.createComponent(MyGames);
-    fixture.detectChanges();
+    );
 
     expect(countLineParts(fixture.nativeElement)).toEqual([
       '3 games',
@@ -127,91 +186,111 @@ describe('MyGames', () => {
     ]);
   });
 
-  it('leaves out the completed and 100% counts when they are zero', () => {
-    const fixture = TestBed.createComponent(MyGames);
-    fixture.detectChanges();
+  it('uses the singular for a single game and leaves out zero completed and 100% counts', () => {
+    const fixture = render();
 
     expect(countLineParts(fixture.nativeElement)).toEqual(['1 game', '0 hrs played']);
   });
 
-  it('shows totals for just the filtered games and marks the line as filtered', () => {
-    listResult = of([
+  it('filters by title and shows totals for just the matching games', () => {
+    const fixture = render(
       { ...ENTRY, completed_on: '2026-09-01', hours_played: '10.0' },
-      { ...ENTRY, id: 2, game: { ...ENTRY.game, id: 11, title: 'Zelda' }, hours_played: '5.0' },
-    ]);
-    const fixture = TestBed.createComponent(MyGames);
-    fixture.detectChanges();
+      { ...ZELDA, hours_played: '5.0' },
+    );
 
-    fixture.componentInstance.updateFilter('titleQuery', 'zelda');
-    fixture.detectChanges();
+    choose(fixture, '[aria-label="Search my games by title"]', 'zel');
 
+    expect(cardTitles(fixture.nativeElement)).toEqual(['Zelda']);
     expect(countLineParts(fixture.nativeElement)).toEqual(['Showing 1 of 2 games', '5 hrs played']);
-    expect(fixture.nativeElement.querySelector('.game-count--filtered .game-count__scope')).not.toBeNull();
+    expect(
+      fixture.nativeElement.querySelector('.game-count--filtered .game-count__scope'),
+    ).not.toBeNull();
   });
 
-  it('shows the total number of games', () => {
-    listResult = of([ENTRY, { ...ENTRY, id: 2 }]);
-    const fixture = TestBed.createComponent(MyGames);
-    fixture.detectChanges();
+  it('uses the singular for the total when filtering a one-game library', () => {
+    const fixture = render();
 
-    expect(countLineParts(fixture.nativeElement)[0]).toBe('2 games');
+    choose(fixture, '[aria-label="Search my games by title"]', 'mar');
+
+    expect(countLineParts(fixture.nativeElement)[0]).toBe('Showing 1 of 1 game');
   });
 
-  it('uses the singular for a single game', () => {
-    const fixture = TestBed.createComponent(MyGames);
-    fixture.detectChanges();
+  it('filters by system using the systems in the library', () => {
+    const fixture = render(ENTRY, ZELDA);
 
-    expect(countLineParts(fixture.nativeElement)[0]).toBe('1 game');
+    choose(fixture, '[aria-label="Filter by system"]', '2');
+
+    expect(cardTitles(fixture.nativeElement)).toEqual(['Zelda']);
   });
 
-  it('filters the visible games and shows how many match', () => {
-    listResult = of([ENTRY, { ...ENTRY, id: 2, game: { ...ENTRY.game, id: 11, title: 'Zelda' } }]);
-    const fixture = TestBed.createComponent(MyGames);
-    fixture.detectChanges();
+  it('filters by ownership, and "Digital & physical" shows everything again', () => {
+    const fixture = render(ENTRY, ZELDA);
 
-    fixture.componentInstance.updateFilter('titleQuery', 'zel');
-    fixture.detectChanges();
+    choose(fixture, '[aria-label="Filter by ownership"]', 'physical');
+    expect(cardTitles(fixture.nativeElement)).toEqual(['Zelda']);
 
-    expect(fixture.nativeElement.querySelectorAll('.game-card').length).toBe(1);
-    expect(countLineParts(fixture.nativeElement)[0]).toBe('Showing 1 of 2 games');
+    choose(fixture, '[aria-label="Filter by ownership"]', '');
+    expect(cardTitles(fixture.nativeElement)).toEqual(['Mario', 'Zelda']);
+  });
+
+  it('filters by minimum and maximum rating, treating the blank option as no limit', () => {
+    const fixture = render(ENTRY, ZELDA);
+
+    choose(fixture, '[aria-label="Min rating"]', '4');
+    expect(cardTitles(fixture.nativeElement)).toEqual(['Mario']);
+
+    choose(fixture, '[aria-label="Min rating"]', '');
+    choose(fixture, '[aria-label="Max rating"]', '3');
+    expect(cardTitles(fixture.nativeElement)).toEqual(['Zelda']);
   });
 
   it('labels the top minimum rating as just 5★, since nothing rates higher', () => {
-    const fixture = TestBed.createComponent(MyGames);
-    fixture.detectChanges();
+    const fixture = render();
 
-    const minRatingOptions = fixture.nativeElement.querySelectorAll('select[aria-label="Min rating"] option');
-    const labels = [...minRatingOptions].map((option) => (option as HTMLOptionElement).textContent!.trim());
-    expect(labels).toEqual(['Min rating', '1★ or more', '2★ or more', '3★ or more', '4★ or more', '5★']);
+    const minRatingOptions = fixture.nativeElement.querySelectorAll(
+      'select[aria-label="Min rating"] option',
+    );
+    const labels = [...minRatingOptions].map((option) =>
+      (option as HTMLOptionElement).textContent!.trim(),
+    );
+    expect(labels).toEqual([
+      'Min rating',
+      '1★ or more',
+      '2★ or more',
+      '3★ or more',
+      '4★ or more',
+      '5★',
+    ]);
   });
 
-  it('treats the "any" option of a numeric filter as no filter', () => {
-    const fixture = TestBed.createComponent(MyGames);
-    fixture.componentInstance.updateNumberFilter('minRating', '4');
-    fixture.componentInstance.updateNumberFilter('systemId', '');
+  it('clears active filters from the filter bar', () => {
+    const fixture = render(ENTRY, ZELDA);
+    choose(fixture, '[aria-label="Filter by ownership"]', 'physical');
 
-    expect(fixture.componentInstance['filters']()).toEqual(expect.objectContaining({ minRating: 4, systemId: null }));
+    click(fixture, 'Clear filters', fixture.nativeElement.querySelector('.filter-bar'));
+
+    expect(cardTitles(fixture.nativeElement)).toEqual(['Mario', 'Zelda']);
+    expect(fixture.nativeElement.querySelector('.filter-bar button')).toBeNull();
   });
 
   it('shows a clear-filters prompt when nothing matches, and clearing restores the list', () => {
-    const fixture = TestBed.createComponent(MyGames);
-    fixture.detectChanges();
-    fixture.componentInstance.updateFilter('titleQuery', 'no such game');
-    fixture.detectChanges();
+    const fixture = render();
+    choose(fixture, '[aria-label="Search my games by title"]', 'no such game');
     expect(fixture.nativeElement.textContent).toContain('No games match these filters.');
 
-    fixture.componentInstance.clearFilters();
-    fixture.detectChanges();
+    click(fixture, 'Clear filters', fixture.nativeElement.querySelector('.empty-state'));
 
-    expect(fixture.nativeElement.querySelectorAll('.game-card').length).toBe(1);
+    expect(cardTitles(fixture.nativeElement)).toEqual(['Mario']);
   });
 
   it('stops loading and shows an error when the request fails', () => {
     listResult = throwError(() => new Error('failed'));
-    const fixture = TestBed.createComponent(MyGames);
-    fixture.detectChanges();
 
-    expect(fixture.componentInstance['loading']()).toBe(false);
-    expect(fixture.componentInstance['errorMessage']()).toBe('Could not load your games. Please try again.');
+    const fixture = render();
+
+    expect(fixture.nativeElement.textContent).toContain(
+      'Could not load your games. Please try again.',
+    );
+    expect(fixture.nativeElement.textContent).not.toContain('Loading…');
   });
 });

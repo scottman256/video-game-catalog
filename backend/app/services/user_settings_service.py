@@ -10,9 +10,6 @@ class UserSettingsService:
     def __init__(self, db: Session) -> None:
         self._settings = UserSettingsRepository(db)
 
-    def get_settings(self, user_id: int) -> UserSettings | None:
-        return self._settings.get_by_user_id(user_id)
-
     def get_dark_mode(self, user_id: int) -> bool:
         settings = self._settings.get_by_user_id(user_id)
         return settings.dark_mode if settings else _DEFAULT_DARK_MODE

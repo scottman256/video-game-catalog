@@ -31,6 +31,16 @@ postgres = [
 pythonpath = ["."]
 testpaths = ["tests"]
 
+[tool.coverage.run]
+source = ["app", "scripts"]
+branch = true
+
+[tool.coverage.report]
+show_missing = true
+skip_covered = true
+fail_under = 90
+exclude_also = ['if __name__ == "__main__":']
+
 [build-system]
 requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"

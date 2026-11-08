@@ -1,32 +1,57 @@
-import { TestBed } from '@angular/core/testing';
+import { ComponentFixture, TestBed } from '@angular/core/testing';
 
 import { ImageModal } from './image-modal';
 
 describe('ImageModal', () => {
-  it('renders nothing when there is no image url', () => {
+  function render(imageUrl: string | null): ComponentFixture<ImageModal> {
     const fixture = TestBed.createComponent(ImageModal);
+    fixture.componentRef.setInput('imageUrl', imageUrl);
     fixture.detectChanges();
+    return fixture;
+  }
 
-    expect(fixture.nativeElement.querySelector('.modal-backdrop')).toBeNull();
+  function closedCount(fixture: ComponentFixture<ImageModal>): () => number {
+    let count = 0;
+    fixture.componentInstance.closed.subscribe(() => count++);
+    return () => count;
+  }
+
+  it('renders nothing when there is no image url', () => {
+    expect(render(null).nativeElement.querySelector('.modal-backdrop')).toBeNull();
   });
 
   it('renders the image when a url is provided', () => {
-    const fixture = TestBed.createComponent(ImageModal);
-    fixture.componentRef.setInput('imageUrl', 'shot.png');
-    fixture.detectChanges();
-
-    expect(fixture.nativeElement.querySelector('.modal-image').src).toContain('shot.png');
+    expect(render('shot.png').nativeElement.querySelector('.modal-image').src).toContain(
+      'shot.png',
+    );
   });
 
   it('emits closed when the backdrop is clicked', () => {
-    const fixture = TestBed.createComponent(ImageModal);
-    fixture.componentRef.setInput('imageUrl', 'shot.png');
-    fixture.detectChanges();
-    let closed = false;
-    fixture.componentInstance.closed.subscribe(() => (closed = true));
+    const fixture = render('shot.png');
+    const closed = closedCount(fixture);
 
     fixture.nativeElement.querySelector('.modal-backdrop').click();
 
-    expect(closed).toBe(true);
+    expect(closed()).toBe(1);
+  });
+
+  it('emits closed from the close button', () => {
+    const fixture = render('shot.png');
+    const closed = closedCount(fixture);
+
+    fixture.nativeElement.querySelector('.modal-close').click();
+
+    expect(closed()).toBeGreaterThan(0);
+  });
+
+  it('emits closed when Escape is pressed', () => {
+    const fixture = render('shot.png');
+    const closed = closedCount(fixture);
+
+    fixture.nativeElement
+      .querySelector('.modal-backdrop')
+      .dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape' }));
+
+    expect(closed()).toBe(1);
   });
 });

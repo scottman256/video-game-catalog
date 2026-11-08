@@ -1,19 +1,30 @@
 import { ComponentFixture, TestBed } from '@angular/core/testing';
 
+import { buttonWithText, enterValue } from '../../../testing/dom';
 import { ProfilePictureCropper } from './profile-picture-cropper';
 
 const CROPPED_BLOB = new Blob(['cropped'], { type: 'image/png' });
 
 /** jsdom has no canvas implementation, so stub the two calls the cropper makes. */
-function stubCanvas(succeeds = true): void {
+function stubCanvas({
+  hasContext = true,
+  blob = CROPPED_BLOB as Blob | null,
+  completes = true,
+} = {}): void {
   HTMLCanvasElement.prototype.getContext = (() =>
-    succeeds ? ({ drawImage: () => undefined } as unknown as CanvasRenderingContext2D) : null) as never;
+    hasContext
+      ? ({ drawImage: () => undefined } as unknown as CanvasRenderingContext2D)
+      : null) as never;
   HTMLCanvasElement.prototype.toBlob = function (callback: BlobCallback) {
-    callback(CROPPED_BLOB);
+    if (completes) callback(blob);
   } as never;
 }
 
-function loadImage(fixture: ComponentFixture<ProfilePictureCropper>, width = 400, height = 200): void {
+function loadImage(
+  fixture: ComponentFixture<ProfilePictureCropper>,
+  width = 400,
+  height = 200,
+): void {
   const image = fixture.nativeElement.querySelector('.cropper__image') as HTMLImageElement;
   Object.defineProperty(image, 'naturalWidth', { value: width, configurable: true });
   Object.defineProperty(image, 'naturalHeight', { value: height, configurable: true });
@@ -26,6 +37,38 @@ function openWithFile(): ComponentFixture<ProfilePictureCropper> {
   fixture.componentRef.setInput('file', new File(['image'], 'avatar.png', { type: 'image/png' }));
   fixture.detectChanges();
   return fixture;
+}
+
+/** jsdom lacks PointerEvent, but the cropper only reads the coordinates a MouseEvent also carries. */
+function pointer(
+  fixture: ComponentFixture<ProfilePictureCropper>,
+  type: string,
+  clientX = 0,
+  clientY = 0,
+): void {
+  const viewport = fixture.nativeElement.querySelector('.cropper__viewport');
+  viewport.dispatchEvent(new MouseEvent(type, { clientX, clientY, bubbles: true }));
+  fixture.detectChanges();
+}
+
+function dragBy(fixture: ComponentFixture<ProfilePictureCropper>, x: number, y: number): void {
+  pointer(fixture, 'pointerdown', 0, 0);
+  pointer(fixture, 'pointermove', x, y);
+}
+
+function offsets(fixture: ComponentFixture<ProfilePictureCropper>): [number, number] {
+  return [fixture.componentInstance['offsetX'](), fixture.componentInstance['offsetY']()];
+}
+
+function zoomTo(fixture: ComponentFixture<ProfilePictureCropper>, zoom: string): void {
+  enterValue(fixture.nativeElement.querySelector('#crop-zoom'), zoom);
+  fixture.detectChanges();
+}
+
+async function save(fixture: ComponentFixture<ProfilePictureCropper>): Promise<void> {
+  buttonWithText(fixture.nativeElement, 'Save picture').click();
+  await fixture.whenStable();
+  fixture.detectChanges();
 }
 
 describe('ProfilePictureCropper', () => {
@@ -54,9 +97,8 @@ describe('ProfilePictureCropper', () => {
     const fixture = openWithFile();
     loadImage(fixture);
 
-    expect(fixture.componentInstance['zoom']()).toBe(1);
-    expect(fixture.componentInstance['offsetX']()).toBe(0);
-    expect(fixture.componentInstance['offsetY']()).toBe(0);
+    expect(fixture.nativeElement.querySelector('#crop-zoom').value).toBe('1');
+    expect(offsets(fixture)).toEqual([0, 0]);
   });
 
   it('sizes the image to cover the circular viewport', () => {
@@ -64,62 +106,71 @@ describe('ProfilePictureCropper', () => {
     loadImage(fixture, 400, 200);
 
     // 200px tall scaled to the 260px viewport => scale 1.3 => 520x260
-    expect(fixture.componentInstance['displayWidth']()).toBe(520);
-    expect(fixture.componentInstance['displayHeight']()).toBe(260);
+    const image = fixture.nativeElement.querySelector('.cropper__image');
+    expect([image.style.width, image.style.height]).toEqual(['520px', '260px']);
   });
 
   it('zooms via the slider', () => {
     const fixture = openWithFile();
     loadImage(fixture);
 
-    fixture.componentInstance.setZoom(2);
+    zoomTo(fixture, '2');
 
-    expect(fixture.componentInstance['zoom']()).toBe(2);
-    expect(fixture.componentInstance['displayHeight']()).toBe(520);
+    expect(fixture.nativeElement.querySelector('.cropper__image').style.height).toBe('520px');
   });
 
   it('repositions the image when dragged', () => {
     const fixture = openWithFile();
     loadImage(fixture, 400, 200);
 
-    fixture.componentInstance.startDrag({ clientX: 0, clientY: 0, pointerId: 1, target: {} } as never);
-    fixture.componentInstance.drag({ clientX: 40, clientY: 0, pointerId: 1 } as never);
+    dragBy(fixture, 40, 0);
 
-    expect(fixture.componentInstance['offsetX']()).toBe(40);
+    expect(offsets(fixture)).toEqual([40, 0]);
   });
 
   it('does not let the image be dragged past its edge', () => {
     const fixture = openWithFile();
     loadImage(fixture, 400, 200);
 
-    fixture.componentInstance.startDrag({ clientX: 0, clientY: 0, pointerId: 1, target: {} } as never);
-    fixture.componentInstance.drag({ clientX: 9999, clientY: 9999, pointerId: 1 } as never);
+    dragBy(fixture, 9999, 9999);
 
     // 520px wide image in a 260px viewport => 130px of slack each side, and none vertically
-    expect(fixture.componentInstance['offsetX']()).toBe(130);
-    expect(fixture.componentInstance['offsetY']()).toBe(0);
+    expect(offsets(fixture)).toEqual([130, 0]);
   });
 
   it('ignores pointer movement that is not part of a drag', () => {
     const fixture = openWithFile();
     loadImage(fixture);
 
-    fixture.componentInstance.drag({ clientX: 40, clientY: 40, pointerId: 1 } as never);
+    pointer(fixture, 'pointermove', 40, 40);
 
-    expect(fixture.componentInstance['offsetX']()).toBe(0);
+    expect(offsets(fixture)).toEqual([0, 0]);
+  });
+
+  it('stops dragging once the pointer is released or the gesture is cancelled', () => {
+    const fixture = openWithFile();
+    loadImage(fixture, 400, 200);
+
+    dragBy(fixture, 40, 0);
+    pointer(fixture, 'pointerup');
+    pointer(fixture, 'pointermove', 100, 0);
+    expect(offsets(fixture)).toEqual([40, 0]);
+
+    pointer(fixture, 'pointerdown', 0, 0);
+    pointer(fixture, 'pointercancel');
+    pointer(fixture, 'pointermove', -100, 0);
+    expect(offsets(fixture)).toEqual([40, 0]);
   });
 
   it('re-clamps the position when zooming back out', () => {
     const fixture = openWithFile();
     loadImage(fixture, 400, 200);
-    fixture.componentInstance.setZoom(2);
-    fixture.componentInstance.startDrag({ clientX: 0, clientY: 0, pointerId: 1, target: {} } as never);
-    fixture.componentInstance.drag({ clientX: 9999, clientY: 9999, pointerId: 1 } as never);
+    zoomTo(fixture, '2');
+    dragBy(fixture, 9999, 9999);
 
-    fixture.componentInstance.setZoom(1);
+    zoomTo(fixture, '1');
 
-    expect(fixture.componentInstance['offsetX']()).toBe(130);
-    expect(fixture.componentInstance['offsetY']()).toBe(0);
+    expect(offsets(fixture)).toEqual([130, 0]);
   });
 
   it('emits the cropped image on save', async () => {
@@ -128,24 +179,46 @@ describe('ProfilePictureCropper', () => {
     let emitted: Blob | undefined;
     fixture.componentInstance.cropped.subscribe((blob) => (emitted = blob));
 
-    fixture.componentInstance.save();
-    await Promise.resolve();
+    await save(fixture);
 
     expect(emitted).toBe(CROPPED_BLOB);
-    expect(fixture.componentInstance['processing']()).toBe(false);
+    expect(buttonWithText(fixture.nativeElement, 'Save picture').disabled).toBe(false);
   });
 
-  it('reports a friendly error when the browser cannot crop', async () => {
-    stubCanvas(false);
+  it('shows that it is saving and blocks a second save while cropping', () => {
+    stubCanvas({ completes: false });
     const fixture = openWithFile();
     loadImage(fixture);
 
-    fixture.componentInstance.save();
-    await Promise.resolve();
-    await Promise.resolve();
+    buttonWithText(fixture.nativeElement, 'Save picture').click();
+    fixture.detectChanges();
 
-    expect(fixture.componentInstance['errorMessage']()).toContain('Could not crop that image');
-    expect(fixture.componentInstance['processing']()).toBe(false);
+    expect(buttonWithText(fixture.nativeElement, 'Saving…').disabled).toBe(true);
+  });
+
+  it('reports a friendly error when the browser cannot crop', async () => {
+    stubCanvas({ hasContext: false });
+    const fixture = openWithFile();
+    loadImage(fixture);
+
+    await save(fixture);
+
+    expect(fixture.nativeElement.querySelector('.cropper__error').textContent).toContain(
+      'Could not crop that image',
+    );
+    expect(buttonWithText(fixture.nativeElement, 'Save picture').disabled).toBe(false);
+  });
+
+  it('reports a friendly error when the cropped image cannot be produced', async () => {
+    stubCanvas({ blob: null });
+    const fixture = openWithFile();
+    loadImage(fixture);
+
+    await save(fixture);
+
+    expect(fixture.nativeElement.querySelector('.cropper__error').textContent).toContain(
+      'Could not crop that image',
+    );
   });
 
   it('creates exactly one object url per file, without re-triggering itself', () => {
@@ -172,7 +245,7 @@ describe('ProfilePictureCropper', () => {
     let cancelled = false;
     fixture.componentInstance.cancelled.subscribe(() => (cancelled = true));
 
-    fixture.nativeElement.querySelector('.cropper__actions .btn-secondary').click();
+    buttonWithText(fixture.nativeElement, 'Cancel').click();
 
     expect(cancelled).toBe(true);
   });
