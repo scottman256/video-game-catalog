@@ -1,3 +1,5 @@
+from app.core.security import create_access_token
+
 REGISTER_PAYLOAD = {
     "username": "scott",
     "email": "scott@example.com",
@@ -60,3 +62,35 @@ def test_me_requires_authentication(client):
     response = client.get("/auth/me")
 
     assert response.status_code == 401
+
+
+def test_refresh_requires_a_refresh_cookie(client):
+    response = client.post("/auth/refresh")
+
+    assert response.status_code == 401
+
+
+def test_refresh_token_cannot_be_reused_after_rotation(client):
+    client.post("/auth/register", json=REGISTER_PAYLOAD)
+    original_refresh_token = client.cookies.get("refresh_token")
+    client.post("/auth/refresh")
+
+    client.cookies.set("refresh_token", original_refresh_token)
+    response = client.post("/auth/refresh")
+
+    assert response.status_code == 401
+
+
+def test_logout_without_a_session_still_succeeds(client):
+    response = client.post("/auth/logout")
+
+    assert response.status_code == 204
+
+
+def test_access_token_for_a_deleted_user_is_rejected(client):
+    client.cookies.set("access_token", create_access_token(999))
+
+    response = client.get("/auth/me")
+
+    assert response.status_code == 401
+    assert response.json()["detail"] == "User no longer exists"

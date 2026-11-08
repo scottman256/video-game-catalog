@@ -1,3 +1,4 @@
+from app.repositories.library_repository import LibraryRepository
 from app.repositories.system_repository import SystemRepository
 
 REGISTER_A = {
@@ -134,3 +135,16 @@ def test_cannot_touch_another_users_wishlist_entry(client, db_session):
 
 def test_wishlist_requires_authentication(client):
     assert client.get("/me/wishlist").status_code == 401
+
+
+def test_purchasing_a_game_already_in_the_library_returns_409(client, db_session):
+    game_id = _register_and_create_game(client, db_session)
+    entry = _add_to_wishlist(client, game_id)
+    user_id = client.get("/auth/me").json()["id"]
+    # Simulates the game reaching the library some other way (e.g. a second browser tab) after it was wishlisted.
+    LibraryRepository(db_session).create(user_id, game_id, "digital", None)
+    db_session.commit()
+
+    response = client.post(f"/me/wishlist/{entry['id']}/purchase", json={"ownership_type": "physical"})
+
+    assert response.status_code == 409

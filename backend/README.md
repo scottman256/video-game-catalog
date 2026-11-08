@@ -85,6 +85,14 @@ pytest
 
 Runs the full unit + integration suite (repositories, services, and full HTTP-level flows through `TestClient`) against an isolated in-memory SQLite database — it never touches your local `video_game_catalog.db`.
 
+To also measure line and branch coverage of `app/` and `scripts/`:
+
+```bash
+pytest --cov
+```
+
+This prints the files that aren't fully covered, with the missing lines. The run fails if total coverage drops below 90% (set under `[tool.coverage]` in `pyproject.toml`). Coverage isn't on by default, because the threshold would fail any run of just a few test files.
+
 ## Creating a new migration
 
 After changing a model in `app/models/`:

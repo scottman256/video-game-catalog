@@ -170,3 +170,14 @@ def test_games_endpoints_require_authentication(client):
     response = client.get("/games")
 
     assert response.status_code == 401
+
+
+def test_create_game_rejects_unknown_system(client, db_session):
+    _register_and_create_system(client, db_session)
+
+    response = client.post(
+        "/games",
+        json={"title": "Mystery Game", "summary": None, "release_year": 1990, "system_id": 999, "esrb_rating": "E"},
+    )
+
+    assert response.status_code == 422

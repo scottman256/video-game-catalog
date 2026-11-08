@@ -23,6 +23,17 @@ describe('AdminGameList', () => {
     expect(links).toEqual(['/admin/games/10', '/admin/games/11']);
   });
 
+  it('shows box art when a game has it, and a placeholder otherwise', () => {
+    const fixture = render();
+    const withBoxArt = { ...PENDING_GAME_SUMMARY, box_art_url: '/cover.png' };
+    fixture.componentRef.setInput('games', [withBoxArt, APPROVED_GAME_SUMMARY]);
+    fixture.detectChanges();
+
+    const art = fixture.nativeElement.querySelectorAll('.admin-game-list__art');
+    expect(art[0].querySelector('img').getAttribute('src')).toBe('/cover.png');
+    expect(art[1].textContent.trim()).toBe('No Art');
+  });
+
   it('marks only pending games with the pending badge', () => {
     const rows = render().nativeElement.querySelectorAll('.admin-game-list__row');
 

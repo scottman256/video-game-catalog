@@ -1,10 +1,11 @@
 import { TestBed } from '@angular/core/testing';
 import { Router, provideRouter } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
+import { NEVER, Observable, of, throwError } from 'rxjs';
 
 import { AdminGameSummary } from '../../../core/models/admin.model';
 import { AdminService } from '../../../core/services/admin';
 import { APPROVED_GAME_SUMMARY, PENDING_GAME_SUMMARY } from '../../../testing/admin-fixtures';
+import { buttonWithText, enterValue } from '../../../testing/dom';
 import { AdminGames, DELETED_GAME_TITLE } from './admin-games';
 
 describe('AdminGames', () => {
@@ -34,11 +35,38 @@ describe('AdminGames', () => {
 
   it('searches by trimmed title within the chosen status', () => {
     const fixture = TestBed.createComponent(AdminGames);
-    fixture.componentInstance.changeStatus('pending');
+    fixture.detectChanges();
+    enterValue(fixture.nativeElement.querySelector('[aria-label="Approval status"]'), 'pending');
 
-    fixture.componentInstance.search('  mario ');
+    fixture.nativeElement.querySelector('[aria-label="Search by title"]').value = '  mario ';
+    buttonWithText(fixture.nativeElement, 'Search').click();
 
-    expect(listCalls.at(-1)).toEqual(['mario', 'pending']);
+    expect(listCalls).toEqual([
+      ['', 'all'],
+      ['', 'pending'],
+      ['mario', 'pending'],
+    ]);
+  });
+
+  it('shows a loading message until the catalog arrives', () => {
+    listResult = NEVER;
+    const fixture = TestBed.createComponent(AdminGames);
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.textContent).toContain('Loading…');
+  });
+
+  it('closes the delete dialog without deleting when cancelled', () => {
+    const fixture = TestBed.createComponent(AdminGames);
+    fixture.detectChanges();
+    fixture.nativeElement.querySelector('.admin-game-list__delete').click();
+    fixture.detectChanges();
+
+    buttonWithText(fixture.nativeElement.querySelector('[role="alertdialog"]'), 'Cancel').click();
+    fixture.detectChanges();
+
+    expect(fixture.nativeElement.querySelector('[role="alertdialog"]')).toBeNull();
+    expect(fixture.nativeElement.querySelectorAll('.admin-game-list__row').length).toBe(2);
   });
 
   it('says so when nothing matches', () => {

@@ -29,6 +29,14 @@ describe('LibraryService', () => {
     req.flush([]);
   });
 
+  it('fetches a single library entry', () => {
+    service.getById(5).subscribe();
+
+    const req = httpMock.expectOne(`${environment.apiBaseUrl}/me/library/5`);
+    expect(req.request.method).toBe('GET');
+    req.flush({});
+  });
+
   it('adds a game to my library', () => {
     const payload = { game_id: 1, ownership_type: 'digital' as const, price_paid: '19.99' };
     service.add(payload).subscribe();

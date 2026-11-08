@@ -1,3 +1,5 @@
+from sqlalchemy.orm import Session
+
 from app.db.session import SessionLocal
 from app.repositories.system_repository import SystemRepository
 
@@ -45,17 +47,21 @@ SYSTEMS: list[tuple[str, int]] = [
 ]
 
 
-def seed_systems() -> None:
+def seed_systems(db: Session) -> None:
+    repo = SystemRepository(db)
+    for name, release_year in SYSTEMS:
+        if not repo.name_exists(name):
+            repo.create(name, release_year)
+
+
+def main() -> None:
     db = SessionLocal()
     try:
-        repo = SystemRepository(db)
-        for name, release_year in SYSTEMS:
-            if not repo.name_exists(name):
-                repo.create(name, release_year)
+        seed_systems(db)
         db.commit()
     finally:
         db.close()
 
 
 if __name__ == "__main__":
-    seed_systems()
+    main()

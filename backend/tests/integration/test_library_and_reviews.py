@@ -115,3 +115,54 @@ def test_cannot_access_other_users_library_entry(client, db_session):
     response = client.get(f"/me/library/{entry['id']}")
 
     assert response.status_code == 404
+
+
+def test_update_ownership_and_price_paid(client, db_session):
+    client.post("/auth/register", json=REGISTER_A)
+    system_id = SystemRepository(db_session).create("NES", 1985).id
+    db_session.commit()
+    game_id = _create_game(client, system_id)
+    entry = client.post(
+        "/me/library", json={"game_id": game_id, "ownership_type": "digital", "price_paid": None}
+    ).json()
+
+    response = client.patch(f"/me/library/{entry['id']}", json={"ownership_type": "physical", "price_paid": "9.99"})
+
+    assert response.status_code == 200
+    assert response.json()["ownership_type"] == "physical"
+    assert response.json()["price_paid"] == "9.99"
+
+
+def test_get_review_returns_saved_scores_or_empty_review(client, db_session):
+    client.post("/auth/register", json=REGISTER_A)
+    system_id = SystemRepository(db_session).create("NES", 1985).id
+    db_session.commit()
+    game_id = _create_game(client, system_id)
+    entry = client.post(
+        "/me/library", json={"game_id": game_id, "ownership_type": "digital", "price_paid": None}
+    ).json()
+
+    empty_review = client.get(f"/me/library/{entry['id']}/review").json()
+    client.put(f"/me/library/{entry['id']}/review", json={"music_sound": 8})
+    saved_review = client.get(f"/me/library/{entry['id']}/review").json()
+
+    assert empty_review["music_sound"] is None
+    assert empty_review["weighted_score"] is None
+    assert saved_review["music_sound"] == 8
+    assert saved_review["weighted_score"] == 4.0
+
+
+def test_cannot_review_another_users_library_entry(client, db_session):
+    client.post("/auth/register", json=REGISTER_A)
+    system_id = SystemRepository(db_session).create("NES", 1985).id
+    db_session.commit()
+    game_id = _create_game(client, system_id)
+    entry = client.post(
+        "/me/library", json={"game_id": game_id, "ownership_type": "digital", "price_paid": None}
+    ).json()
+    client.post("/auth/logout")
+
+    client.post("/auth/register", json=REGISTER_B)
+
+    assert client.get(f"/me/library/{entry['id']}/review").status_code == 404
+    assert client.put(f"/me/library/{entry['id']}/review", json={"fun_factor": 1}).status_code == 404

@@ -38,6 +38,14 @@ describe('AdminService', () => {
     request.flush([]);
   });
 
+  it('fetches a single game for editing', () => {
+    service.getGame(10).subscribe();
+
+    const request = httpMock.expectOne(`${adminUrl}/games/10`);
+    expect(request.request.method).toBe('GET');
+    request.flush({});
+  });
+
   it('tracks how many games are waiting when the queue loads', () => {
     service.listPendingGames().subscribe();
 

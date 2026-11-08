@@ -1,6 +1,6 @@
 import { TestBed } from '@angular/core/testing';
 import { provideRouter } from '@angular/router';
-import { Observable, of, throwError } from 'rxjs';
+import { NEVER, Observable, of, throwError } from 'rxjs';
 
 import { AdminGameSummary } from '../../../core/models/admin.model';
 import { AdminService } from '../../../core/services/admin';
@@ -35,6 +35,12 @@ describe('ApprovalQueue', () => {
     pendingResult = of([]);
 
     expect(render().textContent).toContain('No games are waiting for approval.');
+  });
+
+  it('shows a loading message until the queue arrives', () => {
+    pendingResult = NEVER;
+
+    expect(render().textContent).toContain('Loading…');
   });
 
   it('shows an error when the queue cannot load', () => {
