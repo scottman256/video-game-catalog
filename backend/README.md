@@ -121,10 +121,28 @@ Point `DATABASE_URL` at a Postgres instance, e.g.:
 DATABASE_URL=postgresql+psycopg2://user:password@localhost:5432/video_game_catalog
 ```
 
-Install a Postgres driver (not included by default, since local dev uses SQLite):
+Install the Postgres driver. It's an optional extra because local dev uses SQLite:
 
 ```bash
-pip install psycopg2-binary
+pip install -e ".[dev,postgres]"
 ```
 
 Then run `alembic upgrade head` and the seed script against that database. The codebase deliberately avoids SQLite- or Postgres-only constructs (no native `ENUM`, no dialect-specific types) so the same models and migrations work unchanged — but it's worth running the test suite once against a real Postgres instance (via `DATABASE_URL` override) before deploying, to catch any dialect drift (e.g. title-search case sensitivity).
+
+If the Docker stack is running, its database is a ready-made Postgres instance at `postgresql+psycopg2://catalog:catalog@localhost:5433/video_game_catalog`.
+
+## Running in Docker
+
+The [Dockerfile](Dockerfile) builds a Python 3.14 image that includes the Postgres driver and runs as a non-root user. Each time the container starts, it:
+
+1. applies migrations (`alembic upgrade head`)
+2. seeds the systems list (`scripts/seed_systems.py`)
+3. starts uvicorn on port 8000 (without `--reload`)
+
+Configuration uses the same environment variables as the `.env` table above. The image deliberately leaves out `.env`, local `*.db` files, `tests/`, and `app/uploads/`, so local dev data never ends up in it.
+
+Usually you run it through the root [docker-compose.yml](../docker-compose.yml) (see the [root README](../README.md#quick-start-with-docker)), which points `DATABASE_URL` at the `db` container and mounts a volume at `/app/app/uploads`. Compose also sets `UVICORN_ROOT_PATH=/api` because the API is served behind nginx's `/api` prefix. Without it, Swagger UI at `/api/docs` would request `/openapi.json` from the wrong path. Run one-off scripts inside the running container:
+
+```bash
+docker compose exec backend python -m scripts.create_admin <username> <email> <password>
+```

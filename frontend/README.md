@@ -37,6 +37,18 @@ npm run build
 
 Outputs optimized, hashed bundles to `dist/frontend/`. The production build swaps in `src/environments/environment.prod.ts` (which points `apiBaseUrl` at `/api` — adjust this to wherever the backend is actually reachable in your deployment).
 
+## Running in Docker
+
+The [Dockerfile](Dockerfile) is a two-stage build. Node 24 runs `npm ci` and the production build, then the compiled app is copied into an nginx 1.29 image. [nginx.conf](nginx.conf):
+
+- serves the app and returns `index.html` for client-side routes such as `/my-games`
+- proxies `/api/*` to the `backend` container and strips the `/api` prefix. The production `apiBaseUrl` works unchanged, and because the browser sees one origin, the httpOnly auth cookies need no CORS setup.
+- allows request bodies up to 10 MB so image uploads (up to 5 MB) aren't rejected by nginx's 1 MB default
+
+The proxy expects a host named `backend`, so run the image through the root [docker-compose.yml](../docker-compose.yml) (see the [root README](../README.md#quick-start-with-docker)). The app is then served at `http://localhost:8080`.
+
+`npm ci` in the image needs `package-lock.json` to be in sync with `package.json` on Linux. If the Docker build fails with "Missing: … from lock file", run `npm install` locally and commit the updated lockfile.
+
 ## Project layout
 
 - `src/app/core/` — services (`auth`, `game`, `system`, `library`, `review`), the auth guard, the auth cookie/refresh interceptor, and shared models.
