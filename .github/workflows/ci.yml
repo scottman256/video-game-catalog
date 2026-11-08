@@ -27,13 +27,17 @@ jobs:
         id: filter
         with:
           # A change to this workflow runs every check, so pipeline edits are tested too.
+          # Markdown is excluded so documentation-only changes skip both test suites.
+          predicate-quantifier: some-with-excludes
           filters: |
             backend:
               - 'backend/**'
               - '.github/workflows/ci.yml'
+              - '!**/*.md'
             frontend:
               - 'frontend/**'
               - '.github/workflows/ci.yml'
+              - '!**/*.md'
 
   backend:
     name: Backend tests and coverage
