@@ -78,4 +78,17 @@ npm start
 
 Then open `http://localhost:4200`, create an account, and start cataloging.
 
+## Continuous integration
+
+[.github/workflows/ci.yml](.github/workflows/ci.yml) runs on every pull request to `main` and every push to `main`:
+
+- **Backend tests and coverage** runs `pytest --cov`, but only when something under `backend/` changed.
+- **Frontend tests and coverage** runs `npm run test:coverage`, but only when something under `frontend/` changed.
+- Both run when the workflow file itself changes.
+- Changes to Markdown files (`*.md`, such as READMEs) never trigger either check, so a documentation-only PR skips both.
+
+Either check fails if its tests fail or its coverage drops below 90%.
+
+`main` is protected: a PR can merge only when the **CI result** check passes. That check passes when every check that ran passed, and it counts a skipped check as passing. A frontend-only PR doesn't wait for the backend check, and vice versa.
+
 See `CLAUDE.md` for the coding style and architecture principles this codebase follows.
